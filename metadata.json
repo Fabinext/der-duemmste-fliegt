@@ -1,0 +1,6 @@
+{
+  "name": "Der Dümmste fliegt",
+  "description": "Ein interaktives Party- und Quizspiel inspiriert von 'The Weakest Link' für Streamer und Couch-Play, gesteuert von einem Game Master.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
