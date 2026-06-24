@@ -53,7 +53,7 @@ export async function initDb() {
     console.log('Connecting to PostgreSQL using DATABASE_URL...');
     pgPool = new pg.Pool({
       connectionString: process.env.DATABASE_URL,
-      ssl: process.env.DATABASE_URL?.includes('sslmode=') ? undefined : { rejectUnauthorized: false }
+      ssl: false
     });
 
     // Create tables
