@@ -351,6 +351,24 @@ export default function GMView({ roomCode, gmToken, onExit }: GMViewProps) {
                     </button>
                   </div>
 
+                  {/* Toggle Finale Advantage */}
+                  <div className="flex items-center justify-between pt-3 border-t border-white/10">
+                    <div>
+                      <span className="text-xs font-medium text-slate-200">Finale Einstiegs-Vorteil</span>
+                      <p className="text-[10px] text-slate-400">Spieler mit mehr verbleibenden Leben erhalten zu Beginn des Finales entsprechende Vorsprungspunkte.</p>
+                    </div>
+                    <button
+                      onClick={() => handleGMAction('updateSettings', { ...room.settings, finaleAdvantage: room.settings.finaleAdvantage === false ? true : false })}
+                      className={`text-xs px-3 py-1.5 rounded-lg font-medium transition-all cursor-pointer ${
+                        room.settings.finaleAdvantage !== false 
+                          ? 'bg-indigo-600/25 text-indigo-300 border border-indigo-500/30' 
+                          : 'bg-white/5 text-slate-400 border border-white/10'
+                      }`}
+                    >
+                      {room.settings.finaleAdvantage !== false ? 'Aktiviert' : 'Deaktiviert'}
+                    </button>
+                  </div>
+
                   {/* API KEY Input for optional AI category */}
                   <div className="pt-3 border-t border-white/10 space-y-1">
                     <label className="block text-xs font-medium text-slate-200">Optionaler Google Gemini API-Key</label>
@@ -887,6 +905,20 @@ export default function GMView({ roomCode, gmToken, onExit }: GMViewProps) {
                     const scoreList = scores as number[];
                     const correctCount = scoreList.filter(s => s === 1).length;
                     const isActive = room.finaleActivePlayer === name;
+
+                    // Calculate advantage for this finalist
+                    const finalists = room.players.filter(p => !p.isEliminated);
+                    const p1 = finalists[0];
+                    const p2 = finalists[1];
+                    let advantageVal = 0;
+                    if (p1 && p2 && room.settings.finaleAdvantage !== false) {
+                      const diff = Math.abs(p1.lives - p2.lives);
+                      if (diff > 0) {
+                        if (p1.lives > p2.lives && name === p1.name) advantageVal = diff;
+                        if (p2.lives > p1.lives && name === p2.name) advantageVal = diff;
+                      }
+                    }
+
                     return (
                       <div 
                         key={name} 
@@ -897,7 +929,14 @@ export default function GMView({ roomCode, gmToken, onExit }: GMViewProps) {
                         }`}
                       >
                         <div className="flex items-center justify-between mb-2">
-                          <span className="font-bold text-slate-100 truncate">{name}</span>
+                          <div>
+                            <span className="font-bold text-slate-100 truncate block">{name}</span>
+                            {advantageVal > 0 && (
+                              <span className="text-[9px] text-emerald-400 font-semibold bg-emerald-500/10 border border-emerald-500/20 px-1.5 py-0.5 rounded mt-1 inline-block">
+                                Einstiegs-Vorteil: +{advantageVal} {advantageVal === 1 ? 'Punkt' : 'Punkte'} (Leben)
+                              </span>
+                            )}
+                          </div>
                           <span className="text-sm font-mono font-bold text-indigo-300">{correctCount} Richtig</span>
                         </div>
                         {/* Dot array for 20 questions */}
