@@ -86,7 +86,7 @@ export async function initDb() {
 
     const client = await pgPool.connect();
     try {
-      // Check if users table is old schema (no password_hash)
+      // Check if users table is old schema (no password_hash) or clans table is missing owner_id
       let needReset = false;
       try {
         const colCheck = await client.query(`
@@ -98,6 +98,19 @@ export async function initDb() {
             SELECT table_name FROM information_schema.tables WHERE table_name = 'users'
           `);
           if (tableCheck.rowCount > 0) {
+            needReset = true;
+          }
+        }
+
+        const clansOwnerCheck = await client.query(`
+          SELECT column_name FROM information_schema.columns 
+          WHERE table_name = 'clans' AND column_name = 'owner_id'
+        `);
+        if (clansOwnerCheck.rowCount === 0) {
+          const clansTableCheck = await client.query(`
+            SELECT table_name FROM information_schema.tables WHERE table_name = 'clans'
+          `);
+          if (clansTableCheck.rowCount > 0) {
             needReset = true;
           }
         }
