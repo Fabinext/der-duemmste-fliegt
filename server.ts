@@ -8,7 +8,19 @@ import { GoogleGenAI, Type } from '@google/genai';
 // Load environment variables
 dotenv.config();
 
-import { initDb, getClans, createClan, getPlayers, addPlayer, recordGameResult } from './src/db.ts';
+import { 
+  initDb, 
+  getClans, 
+  createClan, 
+  getClanMembers, 
+  getUserByUsername, 
+  registerUser, 
+  sendJoinRequest, 
+  getPendingJoinRequests, 
+  respondToJoinRequest, 
+  recordGameResult,
+  hashPassword 
+} from './src/db.ts';
 import { PRESET_QUESTIONS, TriviaQuestion } from './src/questions.ts';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -53,11 +65,13 @@ interface GameRoom {
     clanId: number | null;
     geminiApiKey: string;
     useAiQuestions?: boolean;
+    finaleAdvantage?: boolean;
   };
   currentRound: number;
   activePlayerIndex: number;
   currentPlayerQuestionCount: number;
   currentQuestion: TriviaQuestion | null;
+  currentQuestionActiveAt?: number | null;
   questionsUsed: number[];
   votes: Record<string, number>;
   tiePlayers: string[];
@@ -166,50 +180,141 @@ setInterval(() => {
   }
 }, 30 * 60 * 1000);
 
+// API: AUTHENTICATION
+app.post('/api/auth/register', async (req, res) => {
+  const { username, password } = req.body;
+  if (!username || !username.trim() || !password || !password.trim()) {
+    return res.status(400).json({ error: 'Name und Passwort dürfen nicht leer sein.' });
+  }
+  const nameTrimmed = username.trim();
+  if (nameTrimmed.length < 3 || nameTrimmed.length > 16) {
+    return res.status(400).json({ error: 'Der Name muss zwischen 3 und 16 Zeichen lang sein.' });
+  }
+
+  try {
+    const existing = await getUserByUsername(nameTrimmed);
+    if (existing) {
+      return res.status(400).json({ error: 'Name ist bereits vergeben.' });
+    }
+    const hash = hashPassword(password);
+    const user = await registerUser(nameTrimmed, hash);
+    res.json({ success: true, user: { id: user.id, username: user.username, clanId: user.clan_id } });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message || 'Registrierung fehlgeschlagen.' });
+  }
+});
+
+app.post('/api/auth/login', async (req, res) => {
+  const { username, password } = req.body;
+  if (!username || !username.trim() || !password || !password.trim()) {
+    return res.status(400).json({ error: 'Name und Passwort erforderlich.' });
+  }
+
+  try {
+    const user = await getUserByUsername(username.trim());
+    if (!user) {
+      return res.status(400).json({ error: 'Ungültiger Name oder Passwort.' });
+    }
+    const hash = hashPassword(password);
+    if (user.password_hash !== hash) {
+      return res.status(400).json({ error: 'Ungültiger Name oder Passwort.' });
+    }
+    res.json({ success: true, user: { id: user.id, username: user.username, clanId: user.clan_id } });
+  } catch (err) {
+    res.status(500).json({ error: 'Login fehlgeschlagen.' });
+  }
+});
+
+app.get('/api/auth/me/:username', async (req, res) => {
+  try {
+    const user = await getUserByUsername(req.params.username);
+    if (!user) {
+      return res.status(404).json({ error: 'Benutzer nicht gefunden' });
+    }
+    res.json({ id: user.id, username: user.username, clanId: user.clan_id });
+  } catch (err) {
+    res.status(500).json({ error: 'Fehler beim Abrufen des Benutzerstatus.' });
+  }
+});
+
 // API: CLANS & LEADERS
 app.get('/api/clans', async (req, res) => {
   try {
     const clans = await getClans();
     res.json(clans);
   } catch (err) {
-    res.status(500).json({ error: 'Failed to fetch clans' });
+    res.status(500).json({ error: 'Fehler beim Laden der Clans' });
   }
 });
 
 app.post('/api/clans', async (req, res) => {
   try {
-    const { name } = req.body;
+    const { name, ownerId } = req.body;
     if (!name || !name.trim()) {
       return res.status(400).json({ error: 'Clan-Name darf nicht leer sein.' });
     }
-    const clan = await createClan(name);
+    if (!ownerId) {
+      return res.status(400).json({ error: 'Besitzer-ID erforderlich.' });
+    }
+    const clan = await createClan(name, ownerId);
     res.json(clan);
-  } catch (err) {
-    res.status(500).json({ error: 'Failed to create clan' });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message || 'Fehler beim Erstellen des Clans' });
   }
 });
 
 app.get('/api/clans/:clanId/players', async (req, res) => {
   try {
     const clanId = parseInt(req.params.clanId, 10);
-    const players = await getPlayers(clanId);
-    res.json(players);
+    const members = await getClanMembers(clanId);
+    res.json(members.map(m => ({
+      id: m.id,
+      name: m.username,
+      clan_id: m.clan_id,
+      rounds_played: m.rounds_played,
+      wins: m.wins
+    })));
   } catch (err) {
-    res.status(500).json({ error: 'Failed to fetch players' });
+    res.status(500).json({ error: 'Fehler beim Laden der Clan-Mitglieder' });
   }
 });
 
-app.post('/api/clans/:clanId/players', async (req, res) => {
+// API: CLAN JOIN REQUESTS
+app.post('/api/clans/:clanId/join-request', async (req, res) => {
   try {
     const clanId = parseInt(req.params.clanId, 10);
-    const { name } = req.body;
-    if (!name || !name.trim()) {
-      return res.status(400).json({ error: 'Spielername darf nicht leer sein.' });
+    const { userId } = req.body;
+    if (!userId) {
+      return res.status(400).json({ error: 'Benutzer-ID erforderlich.' });
     }
-    const player = await addPlayer(clanId, name);
-    res.json(player);
+    const request = await sendJoinRequest(clanId, userId);
+    res.json(request);
   } catch (err) {
-    res.status(500).json({ error: 'Failed to add player to clan' });
+    res.status(500).json({ error: 'Beitrittsanfrage konnte nicht gesendet werden.' });
+  }
+});
+
+app.get('/api/clans/:clanId/requests', async (req, res) => {
+  try {
+    const clanId = parseInt(req.params.clanId, 10);
+    const requests = await getPendingJoinRequests(clanId);
+    res.json(requests);
+  } catch (err) {
+    res.status(500).json({ error: 'Fehler beim Laden der Beitrittsanfragen.' });
+  }
+});
+
+app.post('/api/clans/:clanId/requests/:requestId', async (req, res) => {
+  try {
+    const requestId = parseInt(req.params.requestId, 10);
+    const { action } = req.body; // 'accepted' or 'denied'
+    if (action !== 'accepted' && action !== 'denied') {
+      return res.status(400).json({ error: 'Ungültige Aktion.' });
+    }
+    await respondToJoinRequest(requestId, action);
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: 'Fehler beim Bearbeiten der Anfrage.' });
   }
 });
 
@@ -233,12 +338,14 @@ app.post('/api/room/create', (req, res) => {
       gameMode: requestedMode,
       clanId: null,
       geminiApiKey: '',
-      useAiQuestions: false
+      useAiQuestions: false,
+      finaleAdvantage: true
     },
     currentRound: 1,
     activePlayerIndex: 0,
     currentPlayerQuestionCount: 0,
     currentQuestion: null,
+    currentQuestionActiveAt: null,
     questionsUsed: [],
     votes: {},
     tiePlayers: [],
@@ -282,12 +389,18 @@ app.get('/api/room/:roomCode', (req, res) => {
       gameMode: room.settings.gameMode,
       lives: room.settings.lives,
       swimLife: room.settings.swimLife,
-      useAiQuestions: room.settings.useAiQuestions
+      useAiQuestions: room.settings.useAiQuestions,
+      finaleAdvantage: room.settings.finaleAdvantage !== false
     },
     currentRound: room.currentRound,
     tiePlayers: room.tiePlayers,
     winner: room.winner,
-    lastUpdated: room.lastUpdated
+    lastUpdated: room.lastUpdated,
+    currentQuestion: room.currentQuestion ? { question: room.currentQuestion.question } : null,
+    currentQuestionActiveAt: room.currentQuestionActiveAt || null,
+    activePlayerName: room.status === 'finale' ? room.finaleActivePlayer : (room.players[room.activePlayerIndex]?.name || null),
+    finaleQuestionIndex: room.finaleQuestionIndex,
+    finaleScores: room.finaleScores
   });
 });
 
@@ -479,8 +592,38 @@ function setupFinale(room: GameRoom) {
     room.finaleScores[p.name] = Array(20).fill(-1); // -1 means pending
   });
 
-  room.finaleActivePlayer = active[0].name;
-  room.finaleQuestionIndex = 0;
+  // Calculate lives difference
+  const p1 = active[0];
+  const p2 = active[1];
+  let p1Advantage = 0;
+  let p2Advantage = 0;
+
+  if (room.settings.finaleAdvantage !== false) {
+    const diff = Math.abs(p1.lives - p2.lives);
+    if (diff > 0) {
+      if (p1.lives > p2.lives) {
+        p1Advantage = diff;
+      } else {
+        p2Advantage = diff;
+      }
+    }
+  }
+
+  // Set advantages in the score arrays
+  if (p1Advantage > 0) {
+    for (let i = 0; i < p1Advantage; i++) {
+      room.finaleScores[p1.name][i] = 1; // Pre-filled correct answers
+    }
+  }
+  if (p2Advantage > 0) {
+    for (let i = 0; i < p2Advantage; i++) {
+      room.finaleScores[p2.name][i] = 1; // Pre-filled correct answers
+    }
+  }
+
+  room.finaleActivePlayer = p1.name;
+  room.finaleQuestionIndex = p1Advantage;
+  room.currentQuestion = null; // Fix Stichfrage to Finale leak by resetting currentQuestion
 }
 
 // API: GM ACTIONS
@@ -501,7 +644,7 @@ app.post('/api/room/:roomCode/action', async (req, res) => {
   try {
     switch (action) {
       case 'updateSettings': {
-        const { lives, swimLife, cycleCount, gameMode, clanId, geminiApiKey, useAiQuestions } = payload;
+        const { lives, swimLife, cycleCount, gameMode, clanId, geminiApiKey, useAiQuestions, finaleAdvantage } = payload;
         room.settings = {
           lives: parseInt(lives, 10) || 3,
           swimLife: !!swimLife,
@@ -509,7 +652,8 @@ app.post('/api/room/:roomCode/action', async (req, res) => {
           gameMode: gameMode === 'lobby' ? 'lobby' : 'local',
           clanId: clanId ? parseInt(clanId, 10) : null,
           geminiApiKey: geminiApiKey || '',
-          useAiQuestions: !!useAiQuestions
+          useAiQuestions: !!useAiQuestions,
+          finaleAdvantage: finaleAdvantage === undefined ? true : !!finaleAdvantage
         };
 
         // Reset players lives if setting changed before round started
@@ -564,6 +708,11 @@ app.post('/api/room/:roomCode/action', async (req, res) => {
       }
 
       case 'getQuestion': {
+        if (room.status === 'finale') {
+          room.currentQuestion = room.finaleQuestions[room.finaleQuestionIndex];
+          room.currentQuestionActiveAt = Date.now();
+          break;
+        }
         const { category } = payload;
         if (room.settings.useAiQuestions && (room.settings.geminiApiKey || process.env.GEMINI_API_KEY)) {
           try {
@@ -575,6 +724,7 @@ app.post('/api/room/:roomCode/action', async (req, res) => {
               answer: geminiResult.answer
             };
             room.currentQuestion = questionObj;
+            room.currentQuestionActiveAt = Date.now();
             return res.json(room);
           } catch (err) {
             // fallback below
@@ -584,6 +734,7 @@ app.post('/api/room/:roomCode/action', async (req, res) => {
         const presetQ = getRandomPresetQuestion(category, room.questionsUsed);
         room.questionsUsed.push(presetQ.id);
         room.currentQuestion = presetQ;
+        room.currentQuestionActiveAt = Date.now();
         break;
       }
 
@@ -627,10 +778,12 @@ app.post('/api/room/:roomCode/action', async (req, res) => {
             // Entire round-robin is completed. Transition to round summary.
             room.status = 'summary';
             room.currentQuestion = null;
+            room.currentQuestionActiveAt = null;
             room.currentPlayerQuestionCount = 0;
           } else {
             // Next player gets new question
             room.currentQuestion = null;
+            room.currentQuestionActiveAt = null;
             // Update the currentPlayerQuestionCount to match the newly active player's asked count
             room.currentPlayerQuestionCount = room.players[room.activePlayerIndex].roundQuestionsAsked || 0;
           }
@@ -644,6 +797,8 @@ app.post('/api/room/:roomCode/action', async (req, res) => {
           // Move to next question or switch player
           if (room.finaleQuestionIndex < 19) {
             room.finaleQuestionIndex += 1;
+            room.currentQuestion = null;
+            room.currentQuestionActiveAt = null;
           } else {
             // Check if there is a second player who hasn't played yet
             const activeFinalists = room.players.filter(p => !p.isEliminated);
@@ -651,11 +806,24 @@ app.post('/api/room/:roomCode/action', async (req, res) => {
 
             if (playerIndex === 0 && activeFinalists[1]) {
               // Switch to player 2
-              room.finaleActivePlayer = activeFinalists[1].name;
-              room.finaleQuestionIndex = 0;
+              const p1 = activeFinalists[0];
+              const p2 = activeFinalists[1];
+              let p2Adv = 0;
+              if (room.settings.finaleAdvantage !== false) {
+                const diff = Math.abs(p1.lives - p2.lives);
+                if (diff > 0 && p2.lives > p1.lives) {
+                  p2Adv = diff;
+                }
+              }
+              room.finaleActivePlayer = p2.name;
+              room.finaleQuestionIndex = p2Adv;
+              room.currentQuestion = null;
+              room.currentQuestionActiveAt = null;
             } else {
               // Both players finished their 20 questions! Determine the winner
               room.status = 'ended';
+              room.currentQuestion = null;
+              room.currentQuestionActiveAt = null;
 
               const p1Name = activeFinalists[0].name;
               const p2Name = activeFinalists[1].name;
