@@ -23,6 +23,7 @@ export interface GamePlayer {
   deviceId: string | null;
   roundQuestionsAsked?: number;
   roundHistory?: RoundQuestionHistory[];
+  authUsername?: string | null;
 }
 
 export interface GameRoom {
