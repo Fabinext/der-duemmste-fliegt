@@ -74,6 +74,7 @@ interface GameRoom {
   currentQuestion: TriviaQuestion | null;
   currentQuestionActiveAt?: number | null;
   questionsUsed: number[];
+  aiQuestionsUsed?: string[];
   votes: Record<string, number>;
   tiePlayers: string[];
   tieBreakerResolved: boolean;
@@ -113,7 +114,7 @@ function getRandomPresetQuestion(category: string, excludedIds: number[]): Trivi
 }
 
 // Generate question using Gemini API
-async function generateGeminiQuestion(apiKey: string, category: string): Promise<{ question: string; answer: string }> {
+async function generateGeminiQuestion(apiKey: string, category: string, excludedQuestions: string[] = []): Promise<{ question: string; answer: string }> {
   try {
     const keyToUse = apiKey || process.env.GEMINI_API_KEY;
     if (!keyToUse) {
@@ -134,9 +135,14 @@ async function generateGeminiQuestion(apiKey: string, category: string): Promise
       ? category 
       : randomCategories[Math.floor(Math.random() * randomCategories.length)];
 
+    let exclusionInstruction = '';
+    if (excludedQuestions && excludedQuestions.length > 0) {
+      exclusionInstruction = `\nDie folgende(n) Frage(n) wurden bereits gestellt und dürfen auf KEINEN FALL verwendet, wiederholt oder ähnlich formuliert werden:\n${excludedQuestions.map(q => `- ${q}`).join('\n')}\nGeneriere eine komplett andere Frage.`;
+    }
+
     const response = await ai.models.generateContent({
       model: 'gemini-2.5-flash',
-      contents: `Generiere eine anspruchsvolle und unterhaltsame Trivia-Quizfrage auf Deutsch für die Kategorie "${categoryPrompt}". Stelle sicher, dass korrekte deutsche Rechtschreibung und Umlaute (ä, ö, ü, ß) verwendet werden und keine Sonderzeichen verfälscht sind (nicht "lteste" sondern "älteste", nicht "heit" sondern "heißt"). Die Frage sollte präzise sein und eine kurze, eindeutige Antwort haben (maximal 1 bis 3 Wörter).`,
+      contents: `Generiere eine anspruchsvolle und unterhaltsame Trivia-Quizfrage auf Deutsch für die Kategorie "${categoryPrompt}". Stelle sicher, dass korrekte deutsche Rechtschreibung und Umlaute (ä, ö, ü, ß) verwendet werden und keine Sonderzeichen verfälscht sind (nicht "lteste" sondern "älteste", nicht "heit" sondern "heißt"). Die Frage sollte präzise sein und eine kurze, eindeutige Antwort haben (maximal 1 bis 3 Wörter).${exclusionInstruction}`,
       config: {
         responseMimeType: 'application/json',
         responseSchema: {
@@ -262,7 +268,7 @@ app.post('/api/test-gemini-key', async (req, res) => {
     });
 
     const response = await ai.models.generateContent({
-      model: 'gemini-2.5-flash',
+      model: 'gemini-3.5-flash',
       contents: 'Reagiere mit dem Wort: OK',
     });
 
@@ -398,6 +404,7 @@ app.post('/api/room/create', (req, res) => {
     currentQuestion: null,
     currentQuestionActiveAt: null,
     questionsUsed: [],
+    aiQuestionsUsed: [],
     votes: {},
     tiePlayers: [],
     tieBreakerResolved: false,
@@ -783,7 +790,7 @@ app.post('/api/room/:roomCode/action', async (req, res) => {
         const { category } = payload;
         if (room.settings.useAiQuestions && (room.settings.geminiApiKey || process.env.GEMINI_API_KEY)) {
           try {
-            const geminiResult = await generateGeminiQuestion(room.settings.geminiApiKey, category);
+            const geminiResult = await generateGeminiQuestion(room.settings.geminiApiKey, category, room.aiQuestionsUsed || []);
             const questionObj: TriviaQuestion = {
               id: -Math.floor(Math.random() * 100000), // unique negative id for generated questions
               category: category || 'AI',
@@ -791,6 +798,8 @@ app.post('/api/room/:roomCode/action', async (req, res) => {
               answer: geminiResult.answer,
               source: 'ai'
             };
+            if (!room.aiQuestionsUsed) room.aiQuestionsUsed = [];
+            room.aiQuestionsUsed.push(geminiResult.question);
             room.currentQuestion = questionObj;
             room.currentQuestionActiveAt = Date.now();
             return res.json(room);
@@ -800,6 +809,67 @@ app.post('/api/room/:roomCode/action', async (req, res) => {
         }
         // Fallback to presets
         const presetQ = getRandomPresetQuestion(category, room.questionsUsed);
+        room.questionsUsed.push(presetQ.id);
+        room.currentQuestion = { ...presetQ, source: 'preset' };
+        room.currentQuestionActiveAt = Date.now();
+        break;
+      }
+
+      case 'rerollQuestion': {
+        if (room.status === 'finale') {
+          if (room.settings.useAiQuestions && (room.settings.geminiApiKey || process.env.GEMINI_API_KEY)) {
+            try {
+              const geminiResult = await generateGeminiQuestion(room.settings.geminiApiKey, 'Zufall', room.aiQuestionsUsed || []);
+              const newQ: TriviaQuestion = {
+                id: -Math.floor(Math.random() * 100000),
+                category: 'Zufall',
+                question: geminiResult.question,
+                answer: geminiResult.answer,
+                source: 'ai'
+              };
+              if (!room.aiQuestionsUsed) room.aiQuestionsUsed = [];
+              room.aiQuestionsUsed.push(geminiResult.question);
+              room.finaleQuestions[room.finaleQuestionIndex] = newQ;
+              room.currentQuestion = newQ;
+              room.currentQuestionActiveAt = Date.now();
+              return res.json(room);
+            } catch (err) {
+              // fallback below
+            }
+          }
+          // fallback presets
+          const presetQ = getRandomPresetQuestion('Zufall', room.questionsUsed);
+          room.questionsUsed.push(presetQ.id);
+          const newQ: TriviaQuestion = { ...presetQ, source: 'preset' };
+          room.finaleQuestions[room.finaleQuestionIndex] = newQ;
+          room.currentQuestion = newQ;
+          room.currentQuestionActiveAt = Date.now();
+          break;
+        }
+
+        const { category } = payload || { category: 'Zufall' };
+        const cat = category || 'Zufall';
+        if (room.settings.useAiQuestions && (room.settings.geminiApiKey || process.env.GEMINI_API_KEY)) {
+          try {
+            const geminiResult = await generateGeminiQuestion(room.settings.geminiApiKey, cat, room.aiQuestionsUsed || []);
+            const questionObj: TriviaQuestion = {
+              id: -Math.floor(Math.random() * 100000),
+              category: cat || 'AI',
+              question: geminiResult.question,
+              answer: geminiResult.answer,
+              source: 'ai'
+            };
+            if (!room.aiQuestionsUsed) room.aiQuestionsUsed = [];
+            room.aiQuestionsUsed.push(geminiResult.question);
+            room.currentQuestion = questionObj;
+            room.currentQuestionActiveAt = Date.now();
+            return res.json(room);
+          } catch (err) {
+            // fallback below
+          }
+        }
+        // Fallback to presets
+        const presetQ = getRandomPresetQuestion(cat, room.questionsUsed);
         room.questionsUsed.push(presetQ.id);
         room.currentQuestion = { ...presetQ, source: 'preset' };
         room.currentQuestionActiveAt = Date.now();
@@ -855,7 +925,7 @@ app.post('/api/room/:roomCode/action', async (req, res) => {
             let nextQ: TriviaQuestion | null = null;
             if (room.settings.useAiQuestions && (room.settings.geminiApiKey || process.env.GEMINI_API_KEY)) {
               try {
-                const geminiResult = await generateGeminiQuestion(room.settings.geminiApiKey, 'Zufall');
+                const geminiResult = await generateGeminiQuestion(room.settings.geminiApiKey, 'Zufall', room.aiQuestionsUsed || []);
                 nextQ = {
                   id: -Math.floor(Math.random() * 100000),
                   category: 'Zufall',
@@ -863,6 +933,8 @@ app.post('/api/room/:roomCode/action', async (req, res) => {
                   answer: geminiResult.answer,
                   source: 'ai'
                 };
+                if (!room.aiQuestionsUsed) room.aiQuestionsUsed = [];
+                room.aiQuestionsUsed.push(geminiResult.question);
               } catch (err) {
                 // fallback
               }
@@ -1083,8 +1155,7 @@ async function startApp() {
   await initDb();
 
   // Create the development Vite server middleware in dev mode
-  const isProduction = process.env.NODE_ENV === 'production' || __dirname.includes('dist');
-  if (!isProduction) {
+  if (process.env.NODE_ENV !== 'production') {
     const vite = await createViteServer({
       server: { middlewareMode: true },
       appType: 'spa',
