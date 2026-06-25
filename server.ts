@@ -141,7 +141,7 @@ async function generateGeminiQuestion(apiKey: string, category: string, excluded
     }
 
     const response = await ai.models.generateContent({
-      model: 'gemini-1.5-flash',
+      model: 'gemini-2.0-flash',
       contents: `Generiere eine anspruchsvolle und unterhaltsame Trivia-Quizfrage auf Deutsch für die Kategorie "${categoryPrompt}". 
 
 Regeln für die Generierung:
@@ -274,7 +274,7 @@ app.post('/api/test-gemini-key', async (req, res) => {
     });
 
     const response = await ai.models.generateContent({
-      model: 'gemini-1.5-flash',
+      model: 'gemini-2.0-flash',
       contents: 'Reagiere mit dem Wort: OK',
     });
 
