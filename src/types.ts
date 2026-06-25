@@ -48,6 +48,7 @@ export interface GameRoom {
   currentQuestion: TriviaQuestion | null;
   currentQuestionActiveAt?: number | null;
   questionsUsed: number[];
+  aiQuestionsUsed?: string[];
   votes: Record<string, number>;
   tiePlayers: string[];
   tieBreakerResolved: boolean;
