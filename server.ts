@@ -243,6 +243,39 @@ app.get('/api/online-count', (req, res) => {
   res.json({ count: Math.max(1, activeVisitors.size) });
 });
 
+app.post('/api/test-gemini-key', async (req, res) => {
+  const { apiKey } = req.body;
+  const keyToUse = apiKey || process.env.GEMINI_API_KEY;
+
+  if (!keyToUse || !keyToUse.trim()) {
+    return res.status(400).json({ error: 'Kein API-Key angegeben.' });
+  }
+
+  try {
+    const ai = new GoogleGenAI({
+      apiKey: keyToUse.trim(),
+      httpOptions: {
+        headers: {
+          'User-Agent': 'aistudio-build'
+        }
+      }
+    });
+
+    const response = await ai.models.generateContent({
+      model: 'gemini-3.5-flash',
+      contents: 'Reagiere mit dem Wort: OK',
+    });
+
+    if (response && response.text) {
+      return res.json({ success: true });
+    } else {
+      return res.status(400).json({ success: false, error: 'Leere Antwort von der KI erhalten.' });
+    }
+  } catch (err: any) {
+    return res.status(500).json({ success: false, error: err.message || 'Verbindung zu Gemini fehlgeschlagen.' });
+  }
+});
+
 app.get('/api/auth/me/:username', async (req, res) => {
   try {
     const user = await getUserByUsername(req.params.username);
@@ -755,7 +788,8 @@ app.post('/api/room/:roomCode/action', async (req, res) => {
               id: -Math.floor(Math.random() * 100000), // unique negative id for generated questions
               category: category || 'AI',
               question: geminiResult.question,
-              answer: geminiResult.answer
+              answer: geminiResult.answer,
+              source: 'ai'
             };
             room.currentQuestion = questionObj;
             room.currentQuestionActiveAt = Date.now();
@@ -767,13 +801,13 @@ app.post('/api/room/:roomCode/action', async (req, res) => {
         // Fallback to presets
         const presetQ = getRandomPresetQuestion(category, room.questionsUsed);
         room.questionsUsed.push(presetQ.id);
-        room.currentQuestion = presetQ;
+        room.currentQuestion = { ...presetQ, source: 'preset' };
         room.currentQuestionActiveAt = Date.now();
         break;
       }
 
       case 'submitAnswer': {
-        const { isCorrect } = payload;
+        const { isCorrect, isTimeout } = payload;
         if (room.status === 'round') {
           const activePlayer = room.players[room.activePlayerIndex];
           activePlayer.totalQuestions += 1;
@@ -815,22 +849,59 @@ app.post('/api/room/:roomCode/action', async (req, res) => {
             room.currentQuestionActiveAt = null;
             room.currentPlayerQuestionCount = 0;
           } else {
-            // Next player gets new question
-            room.currentQuestion = null;
-            room.currentQuestionActiveAt = null;
-            // Update the currentPlayerQuestionCount to match the newly active player's asked count
+            // Next player gets new question directly and instantly!
             room.currentPlayerQuestionCount = room.players[room.activePlayerIndex].roundQuestionsAsked || 0;
+            
+            let nextQ: TriviaQuestion | null = null;
+            if (room.settings.useAiQuestions && (room.settings.geminiApiKey || process.env.GEMINI_API_KEY)) {
+              try {
+                const geminiResult = await generateGeminiQuestion(room.settings.geminiApiKey, 'Zufall');
+                nextQ = {
+                  id: -Math.floor(Math.random() * 100000),
+                  category: 'Zufall',
+                  question: geminiResult.question,
+                  answer: geminiResult.answer,
+                  source: 'ai'
+                };
+              } catch (err) {
+                // fallback
+              }
+            }
+
+            if (!nextQ) {
+              const presetQ = getRandomPresetQuestion('Zufall', room.questionsUsed);
+              room.questionsUsed.push(presetQ.id);
+              nextQ = { ...presetQ, source: 'preset' };
+            }
+
+            room.currentQuestion = nextQ;
+            room.currentQuestionActiveAt = Date.now();
           }
         } else if (room.status === 'finale') {
           const activeName = room.finaleActivePlayer;
           if (!activeName) break;
 
           const scores = room.finaleScores[activeName];
-          scores[room.finaleQuestionIndex] = isCorrect ? 1 : 0;
+          const isTimeoutVal = isTimeout === true;
+
+          if (isTimeoutVal) {
+            // Mark current question as wrong
+            scores[room.finaleQuestionIndex] = 0;
+            
+            // Mark next question as wrong too, if there is one
+            if (room.finaleQuestionIndex + 1 < 20) {
+              scores[room.finaleQuestionIndex + 1] = 0;
+              room.finaleQuestionIndex += 2;
+            } else {
+              room.finaleQuestionIndex += 1;
+            }
+          } else {
+            scores[room.finaleQuestionIndex] = isCorrect ? 1 : 0;
+            room.finaleQuestionIndex += 1;
+          }
 
           // Move to next question or switch player
-          if (room.finaleQuestionIndex < 19) {
-            room.finaleQuestionIndex += 1;
+          if (room.finaleQuestionIndex < 20) {
             room.currentQuestion = room.finaleQuestions[room.finaleQuestionIndex] || null;
             room.currentQuestionActiveAt = Date.now();
           } else {
