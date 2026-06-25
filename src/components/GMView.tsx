@@ -3,7 +3,7 @@ import { GameRoom, GamePlayer, TriviaQuestion } from '../types.ts';
 import { 
   Heart, Play, Check, X, RotateCcw, AlertTriangle, 
   HelpCircle, Sparkles, Timer, Award, Vote, Users, Eye, EyeOff,
-  ChevronDown, ChevronUp, CheckCircle, XCircle
+  ChevronDown, ChevronUp, CheckCircle, XCircle, RefreshCw
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 
@@ -541,6 +541,18 @@ export default function GMView({ roomCode, gmToken, onExit }: GMViewProps) {
                         <p className="text-xl font-bold text-emerald-400">{room.currentQuestion.answer}</p>
                       </div>
 
+                      {/* Reroll Button */}
+                      <div className="flex justify-end">
+                        <button
+                          onClick={() => handleGMAction('rerollQuestion', { category: selectedCategory })}
+                          className="flex items-center gap-1.5 bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-300 border border-indigo-500/20 rounded-lg px-3 py-1.5 text-xs font-bold transition-all cursor-pointer uppercase tracking-wider"
+                          title="Frage neu auswürfeln"
+                        >
+                          <RefreshCw className="w-3.5 h-3.5" />
+                          Frage neu auswürfeln
+                        </button>
+                      </div>
+
                       {/* Answer decision buttons */}
                       <div className="grid grid-cols-2 gap-4 pt-4 border-t border-white/10">
                         <button
@@ -913,6 +925,18 @@ export default function GMView({ roomCode, gmToken, onExit }: GMViewProps) {
                         <p className="text-md font-bold text-emerald-400">{room.currentQuestion.answer}</p>
                       </div>
 
+                      {/* Reroll Button */}
+                      <div className="flex justify-end">
+                        <button
+                          onClick={() => handleGMAction('rerollQuestion', { category: 'Zufall' })}
+                          className="flex items-center gap-1.5 bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-300 border border-indigo-500/20 rounded-lg px-3 py-1.5 text-xs font-bold transition-all cursor-pointer uppercase tracking-wider"
+                          title="Frage neu auswürfeln"
+                        >
+                          <RefreshCw className="w-3.5 h-3.5" />
+                          Frage neu auswürfeln
+                        </button>
+                      </div>
+
                       <p className="text-xs text-slate-400 italic text-center">
                         Stelle die Frage den beteiligten Spielern. Wer falsch antwortet oder langsamer ist, scheidet aus!
                       </p>
@@ -1054,6 +1078,18 @@ export default function GMView({ roomCode, gmToken, onExit }: GMViewProps) {
                       <div className="bg-[#0c0c24] rounded-lg p-4 border border-white/10">
                         <span className="text-[10px] text-slate-500 font-mono uppercase tracking-widest block mb-1">Richtige Antwort (bereits sichtbar für Spielleiter):</span>
                         <p className="text-md font-bold text-emerald-400">{room.currentQuestion.answer}</p>
+                      </div>
+
+                      {/* Reroll Button */}
+                      <div className="flex justify-end">
+                        <button
+                          onClick={() => handleGMAction('rerollQuestion', { category: 'Zufall' })}
+                          className="flex items-center gap-1.5 bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-300 border border-indigo-500/20 rounded-lg px-3 py-1.5 text-xs font-bold transition-all cursor-pointer uppercase tracking-wider"
+                          title="Frage neu auswürfeln"
+                        >
+                          <RefreshCw className="w-3.5 h-3.5" />
+                          Frage neu auswürfeln
+                        </button>
                       </div>
 
                       <div className="grid grid-cols-2 gap-3 pt-4 border-t border-white/10">
