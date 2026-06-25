@@ -84,23 +84,18 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen bg-[#05051a] text-white font-sans antialiased selection:bg-indigo-500/30 selection:text-white relative overflow-x-hidden">
+    <div className="min-h-screen bg-ral-bg text-ral-charcoal font-sans antialiased selection:bg-ral1001/30 selection:text-ral-charcoal relative overflow-x-hidden">
       
       {/* Live Online Visitors Counter */}
-      <div className="absolute top-4 right-4 z-50 flex items-center gap-2 bg-indigo-950/50 hover:bg-indigo-950/70 backdrop-blur-md border border-white/10 px-3 py-1.5 rounded-full text-xs font-semibold text-slate-200 shadow-xl transition-all">
+      <div className="absolute top-4 right-4 z-50 flex items-center gap-2 bg-ral1001-light/80 border border-ral1001/40 px-3 py-1.5 rounded-full text-[10px] font-bold text-ral-charcoal-light shadow-sm transition-all">
         <span className="relative flex h-2 w-2">
-          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-          <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-500 opacity-75"></span>
+          <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-600"></span>
         </span>
-        <span className="font-mono text-[10px] uppercase tracking-wider">{onlineCount} {onlineCount === 1 ? 'Spieler' : 'Spieler'} Online</span>
+        <span className="font-mono uppercase tracking-wider">{onlineCount} {onlineCount === 1 ? 'Spieler' : 'Spieler'} Online</span>
       </div>
       
-      {/* Absolute Ambient Glow Elements from Design */}
-      <div className="absolute inset-0 z-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-[-10%] left-[-5%] w-[400px] h-[400px] rounded-full bg-blue-600/20 blur-[120px]"></div>
-        <div className="absolute bottom-[-10%] right-[-5%] w-[500px] h-[500px] rounded-full bg-violet-600/20 blur-[150px]"></div>
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] rounded-full bg-indigo-500/10 blur-[180px]"></div>
-      </div>
+      {/* Absolute Ambient Glow Elements - REMOVED for clean minimalistic RAL design */}
 
       {/* Main Content Area */}
       <div className="max-w-6xl mx-auto px-4 py-8 relative z-10">
@@ -110,24 +105,25 @@ export default function App() {
           <div className="space-y-12">
             
             {/* Header / Logo Section */}
-            <div className="text-center space-y-3 max-w-xl mx-auto pt-8">
-              <h1 className="text-5xl sm:text-6xl font-black tracking-tighter uppercase text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-indigo-300 to-indigo-500 drop-shadow-md">
+            <div className="text-center space-y-4 max-w-xl mx-auto pt-8">
+              <span className="text-[10px] font-bold text-ral1001-dark uppercase tracking-widest px-2.5 py-1 bg-ral1001/10 rounded-full border border-ral1001/20 inline-block">RAL 1001 Minimalist Edition</span>
+              <h1 className="text-4xl sm:text-5xl font-extrabold tracking-tight uppercase text-ral-charcoal">
                 Der Dümmste fliegt
               </h1>
-              <p className="text-slate-300 text-sm sm:text-sm leading-relaxed max-w-lg mx-auto">
+              <p className="text-ral-charcoal-light text-sm leading-relaxed max-w-lg mx-auto">
                 Beantworte Fragen, stimme taktisch gegen deine Mitspieler ab, überlebe das Stechen und triumphiere im Finale!
               </p>
             </div>
 
             {error && (
-              <div className="bg-red-500/20 backdrop-blur-md border border-red-500/30 text-red-200 rounded-xl p-4 text-sm max-w-xl mx-auto text-center">
+              <div className="bg-red-50 border border-red-200 text-red-800 rounded-xl p-4 text-sm max-w-xl mx-auto text-center font-medium">
                 {error}
               </div>
             )}
 
             {/* Selection Grid for GM / Player */}
             <div className="max-w-4xl mx-auto space-y-4">
-              <span className="text-xs font-bold text-indigo-400 uppercase tracking-widest text-center block">Spielmodus wählen</span>
+              <span className="text-xs font-bold text-ral1001-dark uppercase tracking-widest text-center block">Spielmodus wählen</span>
               
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 
@@ -135,23 +131,23 @@ export default function App() {
                 <button
                   onClick={() => handleStartGM('local')}
                   disabled={isLoading}
-                  className="group relative text-left bg-gradient-to-b from-indigo-950/20 to-blue-950/10 backdrop-blur-xl border border-white/10 hover:border-emerald-500/50 hover:bg-white/10 rounded-2xl p-6 shadow-xl transition-all duration-300 focus:outline-none cursor-pointer flex flex-col justify-between"
+                  className="group relative text-left bg-white border border-ral-sand hover:border-ral1001 hover:shadow-md rounded-xl p-6 transition-all duration-200 focus:outline-none cursor-pointer flex flex-col justify-between"
                 >
                   <div className="space-y-4">
-                    <div className="inline-flex p-3.5 bg-emerald-500/15 group-hover:bg-emerald-500/35 text-emerald-300 rounded-xl border border-emerald-500/25 transition-all">
-                      <Tv className="w-6 h-6" />
+                    <div className="inline-flex p-3 bg-ral1001-light text-ral1001-dark rounded-lg border border-ral1001/30 transition-all">
+                      <Tv className="w-5 h-5" />
                     </div>
                     <div className="space-y-2">
-                      <h2 className="text-md font-bold text-white group-hover:text-emerald-300 transition-colors flex items-center gap-1.5">
+                      <h2 className="text-sm font-bold text-ral-charcoal group-hover:text-ral1001-dark transition-colors flex items-center gap-1.5">
                         Lokal (1 Bildschirm)
-                        <span className="bg-emerald-500/10 text-emerald-300 text-[9px] px-1.5 py-0.5 rounded border border-emerald-500/20 uppercase font-semibold font-mono">Offline</span>
+                        <span className="bg-emerald-50 text-emerald-700 text-[8px] px-1.5 py-0.5 rounded border border-emerald-200 uppercase font-semibold font-mono">Offline</span>
                       </h2>
-                      <p className="text-xs text-slate-300 leading-relaxed">
+                      <p className="text-xs text-ral-charcoal-light leading-relaxed">
                         Spiele direkt in einem Raum. Ein Spielleiter leitet das Spiel, stellt Fragen laut vor und verwaltet alle Spieler & Abstimmungen manuell direkt am Bildschirm. Keine Handys benötigt!
                       </p>
                     </div>
                   </div>
-                  <div className="pt-4 text-[10px] font-semibold text-slate-400 group-hover:text-emerald-300 font-mono tracking-wider uppercase transition-colors">
+                  <div className="pt-4 text-[10px] font-bold text-ral1001-dark group-hover:text-ral-charcoal font-mono tracking-wider uppercase transition-colors">
                     &rarr; Lokales Spiel starten
                   </div>
                 </button>
@@ -160,23 +156,23 @@ export default function App() {
                 <button
                   onClick={() => handleStartGM('lobby')}
                   disabled={isLoading}
-                  className="group relative text-left bg-gradient-to-b from-indigo-950/20 to-violet-950/10 backdrop-blur-xl border border-white/10 hover:border-indigo-400/50 hover:bg-white/10 rounded-2xl p-6 shadow-xl transition-all duration-300 focus:outline-none cursor-pointer flex flex-col justify-between"
+                  className="group relative text-left bg-white border border-ral-sand hover:border-ral1001 hover:shadow-md rounded-xl p-6 transition-all duration-200 focus:outline-none cursor-pointer flex flex-col justify-between"
                 >
                   <div className="space-y-4">
-                    <div className="inline-flex p-3.5 bg-indigo-600/20 group-hover:bg-indigo-600/40 text-blue-300 rounded-xl border border-indigo-400/30 transition-all">
-                      <Laptop className="w-6 h-6" />
+                    <div className="inline-flex p-3 bg-ral1001-light text-ral1001-dark rounded-lg border border-ral1001/30 transition-all">
+                      <Laptop className="w-5 h-5" />
                     </div>
                     <div className="space-y-2">
-                      <h2 className="text-md font-bold text-white group-hover:text-blue-300 transition-colors flex items-center gap-1.5">
+                      <h2 className="text-sm font-bold text-ral-charcoal group-hover:text-ral1001-dark transition-colors flex items-center gap-1.5">
                         Online hosten
-                        <span className="bg-indigo-500/10 text-indigo-300 text-[9px] px-1.5 py-0.5 rounded border border-indigo-500/20 uppercase font-semibold font-mono">Online</span>
+                        <span className="bg-indigo-50 text-indigo-700 text-[8px] px-1.5 py-0.5 rounded border border-indigo-200 uppercase font-semibold font-mono">Online</span>
                       </h2>
-                      <p className="text-xs text-slate-300 leading-relaxed">
+                      <p className="text-xs text-ral-charcoal-light leading-relaxed">
                         Hoste ein Spiel auf dem großen Screen (TV/Beamer). Spieler treten live mit ihren eigenen Handys über einen QR-Code/Raumcode bei, erhalten Fragen und stimmen geheim über ihr Handy ab.
                       </p>
                     </div>
                   </div>
-                  <div className="pt-4 text-[10px] font-semibold text-slate-400 group-hover:text-blue-300 font-mono tracking-wider uppercase transition-colors">
+                  <div className="pt-4 text-[10px] font-bold text-ral1001-dark group-hover:text-ral-charcoal font-mono tracking-wider uppercase transition-colors">
                     &rarr; Online Lobby hosten
                   </div>
                 </button>
@@ -184,20 +180,20 @@ export default function App() {
                 {/* Card 3: Online Player */}
                 <button
                   onClick={() => setActiveView('player')}
-                  className="group relative text-left bg-gradient-to-b from-indigo-950/20 to-purple-950/10 backdrop-blur-xl border border-white/10 hover:border-purple-400/50 hover:bg-white/10 rounded-2xl p-6 shadow-xl transition-all duration-300 focus:outline-none cursor-pointer flex flex-col justify-between"
+                  className="group relative text-left bg-white border border-ral-sand hover:border-ral1001 hover:shadow-md rounded-xl p-6 transition-all duration-200 focus:outline-none cursor-pointer flex flex-col justify-between"
                 >
                   <div className="space-y-4">
-                    <div className="inline-flex p-3.5 bg-purple-600/20 group-hover:bg-purple-600/40 text-purple-300 rounded-xl border border-purple-400/30 transition-all">
-                      <Smartphone className="w-6 h-6" />
+                    <div className="inline-flex p-3 bg-ral1001-light text-ral1001-dark rounded-lg border border-ral1001/30 transition-all">
+                      <Smartphone className="w-5 h-5" />
                     </div>
                     <div className="space-y-2">
-                      <h2 className="text-md font-bold text-white group-hover:text-purple-300 transition-colors">Als Mitspieler beitreten</h2>
-                      <p className="text-xs text-slate-300 leading-relaxed">
+                      <h2 className="text-sm font-bold text-ral-charcoal group-hover:text-ral1001-dark transition-colors">Als Mitspieler beitreten</h2>
+                      <p className="text-xs text-ral-charcoal-light leading-relaxed">
                         Gib den Raumcode ein, der auf dem Hauptbildschirm (Host) angezeigt wird, um dich mit deinem Smartphone zu verbinden. Stimme mobil ab und verfolge deinen Status live!
                       </p>
                     </div>
                   </div>
-                  <div className="pt-4 text-[10px] font-semibold text-slate-400 group-hover:text-purple-300 font-mono tracking-wider uppercase transition-colors">
+                  <div className="pt-4 text-[10px] font-bold text-ral1001-dark group-hover:text-ral-charcoal font-mono tracking-wider uppercase transition-colors">
                     &rarr; Spielraum beitreten
                   </div>
                 </button>
@@ -214,10 +210,10 @@ export default function App() {
             </div>
 
             {/* Collapsible Detailed Instructions Panel */}
-            <div className="max-w-3xl mx-auto bg-white/5 backdrop-blur-md border border-white/10 rounded-2xl overflow-hidden transition-all duration-300">
+            <div className="max-w-3xl mx-auto bg-white border border-ral-sand rounded-xl overflow-hidden shadow-sm">
               <button
                 onClick={() => setShowRules(!showRules)}
-                className="w-full flex items-center justify-between p-5 text-sm font-semibold text-indigo-300 uppercase tracking-widest hover:bg-white/5 transition-colors cursor-pointer"
+                className="w-full flex items-center justify-between p-4 text-xs font-bold text-ral-charcoal-light uppercase tracking-widest hover:bg-ral-bg transition-colors cursor-pointer"
               >
                 <span className="flex items-center gap-2">
                   <BookOpen className="w-4 h-4 text-blue-400" />
@@ -234,21 +230,21 @@ export default function App() {
                     exit={{ height: 0, opacity: 0 }}
                     transition={{ duration: 0.25, ease: 'easeInOut' }}
                   >
-                    <div className="p-6 pt-0 border-t border-white/5 grid grid-cols-1 md:grid-cols-2 gap-6 text-xs text-slate-300 leading-relaxed">
-                      <div className="space-y-3 pt-4">
+                    <div className="p-6 pt-0 border-t border-ral-sand grid grid-cols-1 md:grid-cols-2 gap-6 text-xs text-ral-charcoal-light leading-relaxed">
+                      <div className="space-y-3 pt-4 border-r border-ral-sand/40 pr-4">
                         <p>
-                          <strong>1. Die Fragerunde:</strong> Der Spielleiter stellt jedem Spieler nacheinander Fragen. Die Antworten werden laut im Raum oder Chat gegeben. Wer richtig antwortet, behält seine Leben. Wer falsch antwortet, verliert kein Leben direkt, sondern schadet seiner Runden-Statistik!
+                          <strong className="text-ral-charcoal">1. Die Fragerunde:</strong> Der Spielleiter stellt jedem Spieler nacheinander Fragen. Die Antworten werden laut im Raum oder Chat gegeben. Wer richtig antwortet, behält seine Leben. Wer falsch antwortet, verliert kein Leben direkt, sondern schadet seiner Runden-Statistik!
                         </p>
                         <p>
-                          <strong>2. Die Abstimmung:</strong> Am Ende der Fragerunde bestimmen die Spieler geheim oder per Handzeichen (lokal), wer &quot;Der Dümmste&quot; ist. Der Spieler mit den meisten Stimmen verliert 1 wertvolles Leben!
+                          <strong className="text-ral-charcoal">2. Die Abstimmung:</strong> Am Ende der Fragerunde bestimmen die Spieler geheim oder per Handzeichen (lokal), wer &quot;Der Dümmste&quot; ist. Der Spieler mit den meisten Stimmen verliert 1 wertvolles Leben!
                         </p>
                       </div>
                       <div className="space-y-3 pt-4">
                         <p>
-                          <strong>3. Schwimmer-Regel:</strong> Verliert ein Spieler sein letztes Leben, scheidet er normalerweise aus. Ist die &quot;Schwimmer-Regel&quot; aktiv, darf der allererste Spieler auf 0 Leben mit 1 Bonusleben &quot;weiter schwimmen&quot;.
+                          <strong className="text-ral-charcoal">3. Schwimmer-Regel:</strong> Verliert ein Spieler sein letztes Leben, scheidet er normalerweise aus. Ist die &quot;Schwimmer-Regel&quot; aktiv, darf der allererste Spieler auf 0 Leben mit 1 Bonusleben &quot;weiter schwimmen&quot;.
                         </p>
                         <p>
-                          <strong>4. Das Finale:</strong> Sobald nur noch 2 Spieler übrig sind, beginnt das Finale: 20 identische Fragen nacheinander mit jeweils nur 5 Sekunden Antwortzeit pro Frage. Wer am Ende mehr Fragen richtig beantwortet, gewinnt das Spiel!
+                          <strong className="text-ral-charcoal">4. Das Finale:</strong> Sobald nur noch 2 Spieler übrig sind, beginnt das Finale: 20 identische Fragen nacheinander mit jeweils nur 5 Sekunden Antwortzeit pro Frage. Wer am Ende mehr Fragen richtig beantwortet, gewinnt das Spiel!
                         </p>
                       </div>
                     </div>
