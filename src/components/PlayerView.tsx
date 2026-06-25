@@ -8,6 +8,11 @@ interface PlayerViewProps {
 }
 
 export default function PlayerView({ onBackToHome }: PlayerViewProps) {
+  const [currentUser] = useState<{ id: number; username: string; clanId: number | null } | null>(() => {
+    const saved = localStorage.getItem('game_user');
+    return saved ? JSON.parse(saved) : null;
+  });
+
   const [roomCode, setRoomCode] = useState('');
   const [playerName, setPlayerName] = useState('');
   const [deviceId] = useState(() => Math.random().toString(36).substring(2) + Date.now().toString(36));
@@ -92,7 +97,11 @@ export default function PlayerView({ onBackToHome }: PlayerViewProps) {
       const res = await fetch(`/api/room/${roomCode.toUpperCase()}/join`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name: playerName.trim(), deviceId })
+        body: JSON.stringify({ 
+          name: playerName.trim(), 
+          deviceId,
+          authUsername: currentUser ? currentUser.username : null
+        })
       });
 
       if (res.ok) {
@@ -457,27 +466,137 @@ export default function PlayerView({ onBackToHome }: PlayerViewProps) {
           </motion.div>
         )}
 
-        {/* 2. ROUND / SUMMARY / TIEBREAKER / FINALE WAIT */}
+        {/* 2. ROUND / SUMMARY / TIEBREAKER / FINALE ACTIVE STATES */}
         {(room.status === 'round' || room.status === 'summary' || room.status === 'tiebreaker' || room.status === 'finale') && (
           <motion.div
-            key="game-wait"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="bg-white/5 backdrop-blur-md border border-white/10 rounded-2xl p-6 text-center space-y-4"
+            key="game-active-remote"
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            className="space-y-6"
           >
-            <HelpCircle className="w-10 h-10 text-indigo-400 mx-auto animate-pulse" />
-            <div>
-              <h3 className="font-bold text-lg capitalize">Runde {room.currentRound}</h3>
-              <p className="text-xs text-slate-300 mt-1">
-                Beantworte Fragen mündlich im Raum/Chat!
-              </p>
-              <p className="text-xs text-indigo-300 font-medium mt-2">
-                {room.status === 'round' && 'Fragerunde läuft...'}
-                {room.status === 'summary' && 'Auswertung am Hauptbildschirm...'}
-                {room.status === 'tiebreaker' && 'Stichfrage läuft am Hauptbildschirm!'}
-                {room.status === 'finale' && 'Das große Finale läuft!'}
-              </p>
+            {/* ACTIVE PLAYER & STATUS */}
+            <div className="bg-[#05051a]/60 border border-white/10 rounded-2xl p-5 text-center relative overflow-hidden">
+              <div className="absolute top-0 inset-x-0 h-[2px] bg-gradient-to-r from-blue-500 to-indigo-500"></div>
+              {room.status === 'round' || room.status === 'finale' ? (
+                <div className="space-y-1">
+                  <span className="text-[10px] text-indigo-400 uppercase tracking-widest font-bold block">Aktiver Spieler</span>
+                  <h2 className="text-2xl font-black text-white drop-shadow-sm">
+                    {room.activePlayerName || '---'}
+                  </h2>
+                  {room.activePlayerName && room.activePlayerName.toLowerCase() === playerName.toLowerCase() && (
+                    <span className="text-xs text-emerald-400 font-bold animate-pulse block mt-1">★ DU BIST DRAN! ★</span>
+                  )}
+                </div>
+              ) : room.status === 'summary' ? (
+                <div className="space-y-1">
+                  <span className="text-xs text-indigo-400 uppercase tracking-widest font-black block">Auswertung</span>
+                  <h2 className="text-sm font-bold text-slate-100">
+                    Auswertung am Hauptbildschirm! Wer fliegt heute raus?
+                  </h2>
+                </div>
+              ) : room.status === 'tiebreaker' ? (
+                <div className="space-y-1">
+                  <span className="text-xs text-amber-400 uppercase tracking-widest font-black block">Stichfrage (Tie-Breaker)</span>
+                  <h2 className="text-sm font-bold text-slate-100">
+                    Gleichstand! Eine Stichfrage entscheidet!
+                  </h2>
+                </div>
+              ) : (
+                <div className="space-y-1">
+                  <span className="text-xs text-slate-400 uppercase tracking-widest font-black block">Status</span>
+                  <h2 className="text-sm font-bold text-slate-100">Warten auf Spielleiter...</h2>
+                </div>
+              )}
+            </div>
+
+            {/* QUESTIONS COMPANION VIEW */}
+            {(room.status === 'round' || room.status === 'finale' || room.status === 'tiebreaker') && (
+              <div className="bg-[#0b0c24]/85 border border-white/10 rounded-2xl p-6 shadow-2xl space-y-6 relative overflow-hidden">
+                
+                {/* Real-time Synced Countdown Timer */}
+                {timeLeft !== null && timeLeft > 0 && (
+                  <div className="flex flex-col items-center justify-center pt-2">
+                    <div className="relative w-20 h-20 flex items-center justify-center">
+                      <div className={`absolute inset-0 rounded-full border-4 ${timeLeft <= 2 ? 'border-red-500 animate-ping opacity-25' : 'border-indigo-500/30'}`}></div>
+                      <div className={`w-16 h-16 rounded-full flex flex-col items-center justify-center bg-indigo-950/60 border-2 ${timeLeft <= 2 ? 'border-red-500' : 'border-indigo-500'}`}>
+                        <span className={`text-2xl font-black font-mono leading-none ${timeLeft <= 2 ? 'text-red-500' : 'text-white'}`}>
+                          {timeLeft}
+                        </span>
+                        <span className="text-[8px] uppercase font-bold tracking-wider text-slate-400">Sek</span>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Question description */}
+                <div className="text-center space-y-3">
+                  {room.currentQuestion ? (
+                    <>
+                      <span className="text-[10px] bg-indigo-500/10 text-indigo-300 border border-indigo-500/20 rounded-full px-3 py-1 font-mono uppercase tracking-wider font-semibold inline-block">
+                        {room.currentQuestion.category || 'Allgemeinwissen'}
+                      </span>
+                      <p className="text-md sm:text-lg font-bold leading-relaxed text-slate-100">
+                        {room.currentQuestion.question}
+                      </p>
+                    </>
+                  ) : (
+                    <div className="py-6 flex flex-col items-center justify-center gap-3">
+                      <div className="flex gap-1.5 items-center justify-center">
+                        <span className="w-2 h-2 rounded-full bg-indigo-500 animate-bounce" style={{ animationDelay: '0ms' }}></span>
+                        <span className="w-2 h-2 rounded-full bg-indigo-500 animate-bounce" style={{ animationDelay: '150ms' }}></span>
+                        <span className="w-2 h-2 rounded-full bg-indigo-500 animate-bounce" style={{ animationDelay: '300ms' }}></span>
+                      </div>
+                      <p className="text-xs text-slate-400 font-medium">Warten auf Frage...</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* ROOM PLAYERS SCOREBOARD COMPANION */}
+            <div className="bg-white/5 border border-white/10 rounded-2xl p-5 space-y-4 shadow-xl">
+              <h3 className="text-xs font-extrabold text-indigo-300 uppercase tracking-widest flex items-center gap-1.5 border-b border-white/5 pb-2">
+                <Users className="w-4 h-4 text-blue-400" />
+                Aktueller Spielstand
+              </h3>
+              <div className="space-y-2 max-h-64 overflow-y-auto pr-1">
+                {room.players.map((p: any) => (
+                  <div 
+                    key={p.name} 
+                    className={`flex items-center justify-between bg-[#05051a]/40 border rounded-xl p-3 ${
+                      p.isEliminated 
+                        ? 'border-red-500/15 opacity-55 bg-red-950/5' 
+                        : p.name === room.activePlayerName 
+                          ? 'border-indigo-500/40 bg-indigo-500/5' 
+                          : 'border-white/5'
+                    }`}
+                  >
+                    <div className="flex items-center gap-2">
+                      <span className={`text-sm font-semibold ${p.isEliminated ? 'text-slate-500 line-through font-normal' : 'text-slate-100'}`}>
+                        {p.name}
+                      </span>
+                      {p.name === room.activePlayerName && (
+                        <span className="text-[8px] bg-indigo-500/15 border border-indigo-500/20 text-indigo-300 font-extrabold uppercase tracking-wider rounded px-1.5 py-0.5">Aktiv</span>
+                      )}
+                      {p.name.toLowerCase() === playerName.toLowerCase() && (
+                        <span className="text-[8px] bg-white/10 border border-white/10 text-white font-extrabold uppercase tracking-wider rounded px-1.5 py-0.5 font-mono">Du</span>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <span className="text-xs text-slate-400 font-mono">Punkte: {p.score || 0}</span>
+                      <div className="flex gap-0.5">
+                        {Array.from({ length: room.settings.lives }).map((_, i) => (
+                          <Heart 
+                            key={i} 
+                            className={`w-3.5 h-3.5 ${i < p.lives ? 'text-red-500 fill-red-500' : 'text-slate-800'}`} 
+                          />
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
           </motion.div>
         )}
