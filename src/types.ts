@@ -38,11 +38,13 @@ export interface GameRoom {
     clanId: number | null;
     geminiApiKey: string;
     useAiQuestions?: boolean;
+    finaleAdvantage?: boolean;
   };
   currentRound: number;
   activePlayerIndex: number;
   currentPlayerQuestionCount: number;
   currentQuestion: TriviaQuestion | null;
+  currentQuestionActiveAt?: number | null;
   questionsUsed: number[];
   votes: Record<string, number>;
   tiePlayers: string[];
