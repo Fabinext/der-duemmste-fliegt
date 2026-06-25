@@ -24,6 +24,32 @@ export default function GMView({ roomCode, gmToken, onExit }: GMViewProps) {
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const lastUpdatedRef = useRef<number>(0);
 
+  const [apiTestStatus, setApiTestStatus] = useState<'idle' | 'testing' | 'success' | 'error'>('idle');
+  const [apiTestError, setApiTestError] = useState<string | null>(null);
+
+  const handleTestApiKey = async () => {
+    if (!room) return;
+    setApiTestStatus('testing');
+    setApiTestError(null);
+    try {
+      const res = await fetch('/api/test-gemini-key', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ apiKey: room.settings.geminiApiKey })
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        setApiTestStatus('success');
+      } else {
+        setApiTestStatus('error');
+        setApiTestError(data.error || 'Test fehlgeschlagen.');
+      }
+    } catch (err: any) {
+      setApiTestStatus('error');
+      setApiTestError('Netzwerkfehler beim Testen.');
+    }
+  };
+
   const categories = ['Zufall', 'Allgemeinwissen', 'Popkultur', 'Geografie', 'Gaming', 'Trivia'];
 
   // Polling function for real-time state synchronization
@@ -382,13 +408,37 @@ export default function GMView({ roomCode, gmToken, onExit }: GMViewProps) {
                   <div className="pt-3 border-t border-white/10 space-y-1">
                     <label className="block text-xs font-medium text-slate-200">Optionaler Google Gemini API-Key</label>
                     <p className="text-[10px] text-slate-400">Ermöglicht grenzenlose KI-generierte Fragen für das Spiel.</p>
-                    <input
-                      type="password"
-                      placeholder="AI Studio API Key eintragen..."
-                      value={room.settings.geminiApiKey}
-                      onChange={(e) => handleGMAction('updateSettings', { ...room.settings, geminiApiKey: e.target.value })}
-                      className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-xs text-slate-300 outline-none focus:border-indigo-400/40 transition-colors"
-                    />
+                    <div className="flex gap-2">
+                      <input
+                        type="password"
+                        placeholder="AI Studio API Key eintragen..."
+                        value={room.settings.geminiApiKey || ''}
+                        onChange={(e) => handleGMAction('updateSettings', { ...room.settings, geminiApiKey: e.target.value })}
+                        className="flex-1 bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-xs text-slate-300 outline-none focus:border-indigo-400/40 transition-colors"
+                      />
+                      <button
+                        type="button"
+                        onClick={handleTestApiKey}
+                        disabled={apiTestStatus === 'testing'}
+                        className={`px-3 py-2 rounded-lg text-xs font-bold transition-all ${
+                          apiTestStatus === 'testing'
+                            ? 'bg-indigo-600/50 text-indigo-200 cursor-not-allowed'
+                            : apiTestStatus === 'success'
+                            ? 'bg-emerald-600 hover:bg-emerald-500 text-white'
+                            : apiTestStatus === 'error'
+                            ? 'bg-red-600 hover:bg-red-500 text-white'
+                            : 'bg-indigo-600 hover:bg-indigo-500 text-white cursor-pointer'
+                        }`}
+                      >
+                        {apiTestStatus === 'testing' ? 'Prüfe...' : apiTestStatus === 'success' ? 'Erfolgreich ✓' : apiTestStatus === 'error' ? 'Fehler ✗' : 'TEST'}
+                      </button>
+                    </div>
+                    {apiTestError && (
+                      <p className="text-[10px] text-red-400 mt-1">{apiTestError}</p>
+                    )}
+                    {apiTestStatus === 'success' && (
+                      <p className="text-[10px] text-emerald-400 mt-1">Verbindung erfolgreich! Gemini generiert jetzt Fragen.</p>
+                    )}
                   </div>
                 </div>
 
@@ -467,6 +517,15 @@ export default function GMView({ roomCode, gmToken, onExit }: GMViewProps) {
                         <span className="bg-indigo-500/20 text-indigo-300 text-xs px-3 py-1 rounded-full border border-white/10 font-medium">
                           {room.currentQuestion.category}
                         </span>
+                        <span className={`text-[10px] uppercase tracking-wider font-bold px-2.5 py-1 rounded-full ${
+                          room.currentQuestion.source === 'ai' || room.currentQuestion.id < 0
+                            ? 'bg-purple-500/20 text-purple-300 border border-purple-500/30'
+                            : 'bg-blue-500/20 text-blue-300 border border-blue-500/30'
+                        }`}>
+                          {room.currentQuestion.source === 'ai' || room.currentQuestion.id < 0
+                            ? '✨ Gemini KI (API)'
+                            : '📚 Fragen-Pool (Lokal)'}
+                        </span>
                       </div>
 
                       <div className="space-y-4">
@@ -477,22 +536,9 @@ export default function GMView({ roomCode, gmToken, onExit }: GMViewProps) {
                       </div>
 
                       {/* Answer Reveal Panel for GM */}
-                      <div className="bg-[#0c0c24]/80 rounded-xl p-5 border border-white/10 space-y-2.5">
-                        <div className="flex items-center justify-between">
-                          <span className="text-xs text-slate-500 uppercase tracking-widest font-mono">Wahre Antwort:</span>
-                          <button
-                            onClick={() => setIsAnswerRevealed(!isAnswerRevealed)}
-                            className="text-xs text-indigo-300 hover:text-indigo-200 transition-colors flex items-center gap-1 cursor-pointer"
-                          >
-                            {isAnswerRevealed ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
-                            {isAnswerRevealed ? 'Verbergen' : 'Antwort zeigen'}
-                          </button>
-                        </div>
-                        {isAnswerRevealed ? (
-                          <p className="text-lg font-bold text-emerald-400">{room.currentQuestion.answer}</p>
-                        ) : (
-                          <p className="text-sm font-mono text-slate-600 italic">Versteckt (Lies laut vor und klicke auf Richtig/Falsch)</p>
-                        )}
+                      <div className="bg-[#0c0c24]/80 rounded-xl p-5 border border-white/10 space-y-1">
+                        <span className="text-[10px] text-slate-500 uppercase tracking-widest font-mono font-bold block mb-1">Richtige Antwort (bereits sichtbar für Spielleiter):</span>
+                        <p className="text-xl font-bold text-emerald-400">{room.currentQuestion.answer}</p>
                       </div>
 
                       {/* Answer decision buttons */}
