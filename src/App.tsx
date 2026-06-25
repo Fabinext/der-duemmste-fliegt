@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Shield, Tv, Smartphone, Sparkles, BookOpen, Trophy, ChevronDown, ChevronUp, Users, Laptop } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import ClanManager from './components/ClanManager.tsx';
@@ -13,6 +13,36 @@ export default function App() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showRules, setShowRules] = useState(false);
+  const [onlineCount, setOnlineCount] = useState(1);
+  const [visitorId] = useState(() => {
+    try {
+      let id = sessionStorage.getItem('visitor_id');
+      if (!id) {
+        id = Math.random().toString(36).substring(2) + Date.now().toString(36);
+        sessionStorage.setItem('visitor_id', id);
+      }
+      return id;
+    } catch {
+      return Math.random().toString(36).substring(2);
+    }
+  });
+
+  useEffect(() => {
+    const fetchCount = async () => {
+      try {
+        const res = await fetch(`/api/online-count?visitorId=${visitorId}`);
+        if (res.ok) {
+          const data = await res.json();
+          setOnlineCount(data.count);
+        }
+      } catch (err) {
+        // Fail silently
+      }
+    };
+    fetchCount();
+    const interval = setInterval(fetchCount, 5000);
+    return () => clearInterval(interval);
+  }, [visitorId]);
 
   // Initialize a new game room for the Game Master
   const handleStartGM = async (gameMode: 'local' | 'lobby') => {
@@ -55,6 +85,15 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-[#05051a] text-white font-sans antialiased selection:bg-indigo-500/30 selection:text-white relative overflow-x-hidden">
+      
+      {/* Live Online Visitors Counter */}
+      <div className="absolute top-4 right-4 z-50 flex items-center gap-2 bg-indigo-950/50 hover:bg-indigo-950/70 backdrop-blur-md border border-white/10 px-3 py-1.5 rounded-full text-xs font-semibold text-slate-200 shadow-xl transition-all">
+        <span className="relative flex h-2 w-2">
+          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+          <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+        </span>
+        <span className="font-mono text-[10px] uppercase tracking-wider">{onlineCount} {onlineCount === 1 ? 'Spieler' : 'Spieler'} Online</span>
+      </div>
       
       {/* Absolute Ambient Glow Elements from Design */}
       <div className="absolute inset-0 z-0 overflow-hidden pointer-events-none">
