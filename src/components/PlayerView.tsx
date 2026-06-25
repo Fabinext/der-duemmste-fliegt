@@ -67,7 +67,7 @@ export default function PlayerView({ onBackToHome }: PlayerViewProps) {
 
   // Handle the active companion timer for spectators / active players
   useEffect(() => {
-    if (!room || !room.currentQuestionActiveAt || !room.currentQuestion) {
+    if (!room || room.status !== 'finale' || !room.currentQuestionActiveAt || !room.currentQuestion) {
       setTimeLeft(null);
       return;
     }
