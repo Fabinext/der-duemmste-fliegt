@@ -141,8 +141,14 @@ async function generateGeminiQuestion(apiKey: string, category: string, excluded
     }
 
     const response = await ai.models.generateContent({
-      model: 'gemini-2.5-flash',
-      contents: `Generiere eine anspruchsvolle und unterhaltsame Trivia-Quizfrage auf Deutsch für die Kategorie "${categoryPrompt}". Stelle sicher, dass korrekte deutsche Rechtschreibung und Umlaute (ä, ö, ü, ß) verwendet werden und keine Sonderzeichen verfälscht sind (nicht "lteste" sondern "älteste", nicht "heit" sondern "heißt"). Die Frage sollte präzise sein und eine kurze, eindeutige Antwort haben (maximal 1 bis 3 Wörter).${exclusionInstruction}`,
+      model: 'gemini-1.5-flash',
+      contents: `Generiere eine anspruchsvolle und unterhaltsame Trivia-Quizfrage auf Deutsch für die Kategorie "${categoryPrompt}". 
+
+Regeln für die Generierung:
+1. Die exakte Antwort darf unter keinen Umständen im Text der Frage vorkommen (auch nicht in abgewandelter Form).
+2. Stelle sicher, dass die Antwort historisch und wissenschaftlich zu 100% korrekt und eindeutig bewiesen ist.
+3. Verwende korrekte deutsche Rechtschreibung und Umlaute (ä, ö, ü, ß). Keine Sonderzeichen verfälschen (nicht "lteste" sondern "älteste").
+4. Die Frage muss präzise sein und eine kurze, eindeutige Antwort haben (maximal 1 bis 3 Wörter).${exclusionInstruction}`,
       config: {
         responseMimeType: 'application/json',
         responseSchema: {
@@ -1155,7 +1161,8 @@ async function startApp() {
   await initDb();
 
   // Create the development Vite server middleware in dev mode
-  if (process.env.NODE_ENV !== 'production') {
+  const isProduction = process.env.NODE_ENV === 'production' || __dirname.includes('dist');
+  if (!isProduction) {
     const vite = await createViteServer({
       server: { middlewareMode: true },
       appType: 'spa',
