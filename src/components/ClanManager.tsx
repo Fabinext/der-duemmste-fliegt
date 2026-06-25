@@ -318,10 +318,8 @@ export default function ClanManager({ selectedClanId, onSelectClan }: ClanManage
               <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1.5">
                 Nickname / Benutzername
               </label>
-              <div className="relative">
-                <span className="absolute inset-y-0 left-0 pl-3.5 flex items-center text-slate-400">
-                  <User className="w-4 h-4" />
-                </span>
+              <div className="relative flex items-center">
+                <User className="absolute left-3.5 w-4 h-4 text-slate-400 pointer-events-none" />
                 <input
                   type="text"
                   placeholder="Dein Spielername"
@@ -336,10 +334,8 @@ export default function ClanManager({ selectedClanId, onSelectClan }: ClanManage
               <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1.5">
                 Passwort
               </label>
-              <div className="relative">
-                <span className="absolute inset-y-0 left-0 pl-3.5 flex items-center text-slate-400">
-                  <Lock className="w-4 h-4" />
-                </span>
+              <div className="relative flex items-center">
+                <Lock className="absolute left-3.5 w-4 h-4 text-slate-400 pointer-events-none" />
                 <input
                   type="password"
                   placeholder="••••••••"
