@@ -3,6 +3,7 @@ export interface TriviaQuestion {
   category: string;
   question: string;
   answer: string;
+  source?: 'preset' | 'ai';
 }
 
 export interface RoundQuestionHistory {
