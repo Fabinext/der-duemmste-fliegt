@@ -1,1 +1,182 @@
 @import "tailwindcss";
+
+@theme {
+  --color-ral-bg: #FAF7F2;
+  --color-ral-charcoal: #1C1A17;
+  --color-ral-charcoal-light: #4D473E;
+  --color-ral1001: #D1BC8A;
+  --color-ral1001-dark: #8C7853;
+  --color-ral1001-light: #EFEADB;
+  --color-ral-sand: #E5DEC9;
+}
+
+body {
+  background-color: #FAF7F2;
+  color: #1C1A17;
+}
+
+/* Minimalist, high-contrast Sand & Paper RAL 1001 theme overrides */
+
+/* Base container and background adjustments */
+.min-h-screen,
+[class*="bg-[#05051a]"],
+[class*="bg-[#0b0c24]"],
+[class*="bg-[#0c0c24]"],
+[class*="bg-[#08081f]"],
+[class*="bg-[#07071c]"],
+[class*="bg-indigo-950"],
+[class*="bg-slate-950"],
+[class*="bg-indigo-900"],
+[class*="bg-blue-950"] {
+  background-color: #FAF7F2 !important;
+  background-image: none !important;
+  color: #1C1A17 !important;
+}
+
+/* Glassmorphism/Dark Card overrides into crisp white/sand paper cards */
+[class*="bg-white/5"],
+[class*="bg-[#0b0c24]/85"],
+[class*="bg-[#0c0c24]/50"],
+[class*="bg-[#0c0c24]/80"],
+[class*="bg-[#08081f]/40"],
+[class*="bg-[#05051a]/40"],
+[class*="bg-white/10"],
+[class*="bg-indigo-950/50"],
+[class*="bg-indigo-950/20"],
+[class*="bg-violet-950/10"],
+[class*="bg-purple-950/10"],
+[class*="bg-[#05051a]/60"],
+[class*="bg-[#05051a]/80"],
+[class*="bg-[#0c0c24]/60"],
+[class*="bg-indigo-900/40"],
+[class*="bg-indigo-950/20"],
+[class*="bg-indigo-600/10"],
+[class*="bg-indigo-600/20"],
+[class*="bg-indigo-600/30"],
+[class*="bg-indigo-600/40"],
+[class*="bg-purple-600/20"],
+[class*="bg-purple-600/40"],
+[class*="bg-emerald-500/15"],
+.bg-slate-900,
+.bg-slate-800,
+.bg-zinc-900 {
+  background-color: #FFFFFF !important;
+  border-color: #E5DEC9 !important;
+  color: #1C1A17 !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  box-shadow: 0 1px 3px 0 rgba(28, 26, 21, 0.05) !important;
+}
+
+/* Crisp sand borders and divider lines */
+[class*="border-white/5"],
+[class*="border-white/10"],
+[class*="border-white/20"],
+[class*="border-indigo-500/20"],
+[class*="border-indigo-500/30"],
+[class*="border-indigo-400/30"],
+[class*="border-indigo-400/40"],
+[class*="border-indigo-400/50"] {
+  border-color: #E5DEC9 !important;
+}
+
+/* High-contrast readable typography */
+[class*="text-slate-100"],
+[class*="text-slate-200"],
+[class*="text-slate-300"],
+[class*="text-slate-400"],
+[class*="text-slate-500"],
+[class*="text-white"],
+[class*="text-indigo-200"],
+[class*="text-indigo-300"],
+[class*="text-blue-300"],
+[class*="text-purple-300"],
+[class*="text-violet-300"] {
+  color: #1C1A17 !important;
+}
+
+/* Refined metadata / subtitles to warm slate-coal */
+[class*="text-slate-400"],
+[class*="text-slate-500"],
+[class*="text-indigo-300"] {
+  color: #5D5446 !important;
+}
+
+/* Primary focus icons and active details mapped to RAL 1001 */
+[class*="text-indigo-400"],
+[class*="text-blue-400"],
+[class*="text-purple-400"],
+[class*="text-violet-400"] {
+  color: #8C7853 !important;
+}
+
+/* All interactive gradient or neon buttons transformed to elegant solid RAL 1001 Beige */
+[class*="bg-indigo-600"],
+[class*="bg-blue-600"],
+[class*="bg-purple-600"],
+[class*="bg-indigo-500"],
+[class*="bg-blue-500"],
+[class*="bg-purple-500"],
+[class*="bg-gradient-to-r"],
+[class*="from-blue-600"] {
+  background-color: #D1BC8A !important;
+  background-image: none !important;
+  color: #FFFFFF !important;
+}
+
+/* Hover behavior for buttons */
+[class*="bg-indigo-600"]:hover,
+[class*="bg-blue-600"]:hover,
+[class*="bg-purple-600"]:hover,
+[class*="bg-indigo-500"]:hover,
+[class*="bg-blue-500"]:hover,
+[class*="bg-purple-500"]:hover,
+[class*="from-blue-600"]:hover {
+  background-color: #8C7853 !important;
+  color: #FFFFFF !important;
+}
+
+/* Clean, crisp text titles without neon gradients */
+h1, h2, h3, h4, h5, h6 {
+  background-image: none !important;
+  -webkit-background-clip: unset !important;
+  background-clip: unset !important;
+  color: #1C1A17 !important;
+  -webkit-text-fill-color: initial !important;
+}
+
+/* Input boxes in form */
+input, select, textarea {
+  background-color: #FFFFFF !important;
+  border-color: #E5DEC9 !important;
+  color: #1C1A17 !important;
+}
+
+input:focus, select:focus, textarea:focus {
+  border-color: #D1BC8A !important;
+  outline: none !important;
+  box-shadow: 0 0 0 2px rgba(209, 188, 138, 0.25) !important;
+}
+
+/* Clean up status badges and counters */
+[class*="bg-emerald-500/10"],
+[class*="bg-emerald-500/15"] {
+  background-color: #E6F4EA !important;
+  border-color: #A3E635 !important;
+  color: #137333 !important;
+}
+
+[class*="text-emerald-300"],
+[class*="text-emerald-400"] {
+  color: #137333 !important;
+}
+
+/* Remove glow lines or Ping rings for the clean rustic paper look */
+[class*="shadow-2xl"],
+[class*="shadow-xl"] {
+  box-shadow: 0 2px 5px rgba(28, 26, 21, 0.04) !important;
+}
+
+.animate-ping {
+  display: none !important;
+}
