@@ -106,7 +106,6 @@ export default function App() {
             
             {/* Header / Logo Section */}
             <div className="text-center space-y-4 max-w-xl mx-auto pt-8">
-              <span className="text-[10px] font-bold text-ral1001-dark uppercase tracking-widest px-2.5 py-1 bg-ral1001/10 rounded-full border border-ral1001/20 inline-block">RAL 1001 Minimalist Edition</span>
               <h1 className="text-4xl sm:text-5xl font-extrabold tracking-tight uppercase text-ral-charcoal">
                 Der Dümmste fliegt
               </h1>
