@@ -58,18 +58,24 @@ export default function GMView({ roomCode, gmToken, onExit }: GMViewProps) {
       setIsAnswerRevealed(false);
       setTimerSeconds(5);
       
-      if (timerRef.current) clearInterval(timerRef.current);
+      let currentSeconds = 5;
+
+      if (timerRef.current) {
+        clearInterval(timerRef.current);
+      }
 
       timerRef.current = setInterval(() => {
-        setTimerSeconds(prev => {
-          if (prev <= 1) {
-            if (timerRef.current) clearInterval(timerRef.current);
-            // Auto submit incorrect when timer runs out
-            handleGMAction('submitAnswer', { isCorrect: false });
-            return 0;
+        currentSeconds -= 1;
+        if (currentSeconds <= 0) {
+          if (timerRef.current) {
+            clearInterval(timerRef.current);
+            timerRef.current = null;
           }
-          return prev - 1;
-        });
+          setTimerSeconds(0);
+          handleGMAction('submitAnswer', { isCorrect: false });
+        } else {
+          setTimerSeconds(currentSeconds);
+        }
       }, 1000);
     } else {
       if (timerRef.current) {
@@ -79,9 +85,12 @@ export default function GMView({ roomCode, gmToken, onExit }: GMViewProps) {
     }
 
     return () => {
-      if (timerRef.current) clearInterval(timerRef.current);
+      if (timerRef.current) {
+        clearInterval(timerRef.current);
+        timerRef.current = null;
+      }
     };
-  }, [room?.status, room?.currentQuestion, room?.finaleQuestionIndex, room?.finaleActivePlayer]);
+  }, [room?.status, room?.currentQuestion?.id, room?.currentQuestion?.question, room?.finaleQuestionIndex, room?.finaleActivePlayer]);
 
   const handleGMAction = async (action: string, payload: any = {}) => {
     try {
@@ -997,20 +1006,8 @@ export default function GMView({ roomCode, gmToken, onExit }: GMViewProps) {
                       
                       {/* Answer Reveal Panel for GM */}
                       <div className="bg-[#0c0c24] rounded-lg p-4 border border-white/10">
-                        <div className="flex items-center justify-between mb-1">
-                          <span className="text-[10px] text-slate-500 font-mono uppercase tracking-widest">Wahre Antwort:</span>
-                          <button
-                            onClick={() => setIsAnswerRevealed(!isAnswerRevealed)}
-                            className="text-[10px] text-indigo-300 hover:text-indigo-200 transition-colors cursor-pointer"
-                          >
-                            {isAnswerRevealed ? 'Verbergen' : 'Antwort zeigen'}
-                          </button>
-                        </div>
-                        {isAnswerRevealed ? (
-                          <p className="text-md font-bold text-emerald-400">{room.currentQuestion.answer}</p>
-                        ) : (
-                          <p className="text-xs font-mono text-slate-600 italic">Versteckt (Zeit läuft!)</p>
-                        )}
+                        <span className="text-[10px] text-slate-500 font-mono uppercase tracking-widest block mb-1">Richtige Antwort (bereits sichtbar für Spielleiter):</span>
+                        <p className="text-md font-bold text-emerald-400">{room.currentQuestion.answer}</p>
                       </div>
 
                       <div className="grid grid-cols-2 gap-3 pt-4 border-t border-white/10">
