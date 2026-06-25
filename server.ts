@@ -226,6 +226,23 @@ app.post('/api/auth/login', async (req, res) => {
   }
 });
 
+const activeVisitors = new Map<string, number>();
+
+app.get('/api/online-count', (req, res) => {
+  const visitorId = (req.query.visitorId as string) || 'anonymous';
+  activeVisitors.set(visitorId, Date.now());
+
+  // Clean up stale visitors (inactive for > 10 seconds)
+  const now = Date.now();
+  for (const [id, lastSeen] of activeVisitors.entries()) {
+    if (now - lastSeen > 10000) {
+      activeVisitors.delete(id);
+    }
+  }
+
+  res.json({ count: Math.max(1, activeVisitors.size) });
+});
+
 app.get('/api/auth/me/:username', async (req, res) => {
   try {
     const user = await getUserByUsername(req.params.username);
