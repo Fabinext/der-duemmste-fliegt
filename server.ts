@@ -50,6 +50,7 @@ interface GamePlayer {
   deviceId: string | null; // For mobile players
   roundQuestionsAsked?: number;
   roundHistory?: RoundQuestionHistory[];
+  authUsername?: string | null;
 }
 
 interface GameRoom {
@@ -423,7 +424,7 @@ app.get('/api/room/:roomCode/gm', (req, res) => {
 // Mobile join endpoint
 app.post('/api/room/:roomCode/join', (req, res) => {
   const roomCode = req.params.roomCode.toUpperCase();
-  const { name, deviceId } = req.body;
+  const { name, deviceId, authUsername } = req.body;
 
   const room = rooms.get(roomCode);
   if (!room) {
@@ -453,7 +454,8 @@ app.post('/api/room/:roomCode/join', (req, res) => {
     votedFor: null,
     deviceId: deviceId || null,
     roundQuestionsAsked: 0,
-    roundHistory: []
+    roundHistory: [],
+    authUsername: authUsername || null
   };
 
   room.players.push(newPlayer);
@@ -518,6 +520,7 @@ function eliminatePlayer(room: GameRoom, name: string) {
   const p = room.players.find(player => player.name === name);
   if (!p) return;
 
+  const wasEliminatedBefore = p.isEliminated;
   p.lives -= 1;
 
   // Swim-life rule: First player to reach 0 lives gets 1 bonus life instead of instant elimination
@@ -537,12 +540,25 @@ function eliminatePlayer(room: GameRoom, name: string) {
 
   // Count active players
   const remaining = room.players.filter(player => !player.isEliminated);
-  if (remaining.length <= 2) {
-    // Finalists reached
+
+  if (p.isEliminated && !wasEliminatedBefore && remaining.length === 2) {
+    // Finalists reached because a player was fully eliminated
     room.status = 'finale';
     setupFinale(room);
+  } else if (remaining.length === 1) {
+    // Only one player remains - they win!
+    room.status = 'ended';
+    room.winner = remaining[0].name;
+    
+    // Save to persistent database if clan is selected
+    if (room.settings.clanId) {
+      const winnerPlayer = room.players.find(pl => pl.name === room.winner);
+      const winnerName = winnerPlayer?.authUsername || room.winner;
+      const allNames = room.players.map(pl => pl.authUsername || pl.name);
+      recordGameResult(room.settings.clanId, winnerName, allNames).catch(console.error);
+    }
   } else {
-    // Next round setup
+    // Next round setup - keep playing rounds
     room.currentRound += 1;
     room.status = 'round';
     setupRoundCircle(room);
@@ -623,7 +639,8 @@ function setupFinale(room: GameRoom) {
 
   room.finaleActivePlayer = p1.name;
   room.finaleQuestionIndex = p1Advantage;
-  room.currentQuestion = null; // Fix Stichfrage to Finale leak by resetting currentQuestion
+  room.currentQuestion = room.finaleQuestions[p1Advantage] || null;
+  room.currentQuestionActiveAt = Date.now();
 }
 
 // API: GM ACTIONS
@@ -797,8 +814,8 @@ app.post('/api/room/:roomCode/action', async (req, res) => {
           // Move to next question or switch player
           if (room.finaleQuestionIndex < 19) {
             room.finaleQuestionIndex += 1;
-            room.currentQuestion = null;
-            room.currentQuestionActiveAt = null;
+            room.currentQuestion = room.finaleQuestions[room.finaleQuestionIndex] || null;
+            room.currentQuestionActiveAt = Date.now();
           } else {
             // Check if there is a second player who hasn't played yet
             const activeFinalists = room.players.filter(p => !p.isEliminated);
@@ -817,8 +834,8 @@ app.post('/api/room/:roomCode/action', async (req, res) => {
               }
               room.finaleActivePlayer = p2.name;
               room.finaleQuestionIndex = p2Adv;
-              room.currentQuestion = null;
-              room.currentQuestionActiveAt = null;
+              room.currentQuestion = room.finaleQuestions[room.finaleQuestionIndex] || null;
+              room.currentQuestionActiveAt = Date.now();
             } else {
               // Both players finished their 20 questions! Determine the winner
               room.status = 'ended';
@@ -848,8 +865,9 @@ app.post('/api/room/:roomCode/action', async (req, res) => {
 
               // Save to persistent database (Leaderboard) if clan is selected!
               if (room.settings.clanId && room.winner) {
-                const winnerName = room.winner;
-                const allNames = room.players.map(p => p.name);
+                const winnerPlayer = room.players.find(p => p.name === room.winner);
+                const winnerName = winnerPlayer?.authUsername || room.winner;
+                const allNames = room.players.map(p => p.authUsername || p.name);
                 await recordGameResult(room.settings.clanId, winnerName, allNames);
               }
             }
