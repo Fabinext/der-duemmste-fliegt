@@ -316,9 +316,20 @@ export default function PlayerView({ onBackToHome }: PlayerViewProps) {
             <div className="text-center space-y-3">
               {room.currentQuestion ? (
                 <>
-                  <span className="text-[10px] bg-indigo-500/10 text-indigo-300 border border-indigo-500/20 rounded-full px-3 py-1 font-mono uppercase tracking-wider font-semibold inline-block">
-                    Frage
-                  </span>
+                  <div className="flex flex-col items-center gap-1.5">
+                    <span className="text-[10px] bg-indigo-500/10 text-indigo-300 border border-indigo-500/20 rounded-full px-3 py-1 font-mono uppercase tracking-wider font-semibold inline-block">
+                      Finale Frage
+                    </span>
+                    <span className={`text-[8px] uppercase tracking-wider font-bold px-2 py-0.5 rounded-full ${
+                      room.currentQuestion.source === 'ai' || room.currentQuestion.id < 0
+                        ? 'bg-purple-500/20 text-purple-300 border border-purple-500/30'
+                        : 'bg-blue-500/20 text-blue-300 border border-blue-500/30'
+                    }`}>
+                      {room.currentQuestion.source === 'ai' || room.currentQuestion.id < 0
+                        ? '✨ Gemini KI'
+                        : '📚 Fragen-Pool'}
+                    </span>
+                  </div>
                   <p className="text-md sm:text-lg font-bold leading-relaxed text-slate-100">
                     {room.currentQuestion.question}
                   </p>
@@ -533,9 +544,20 @@ export default function PlayerView({ onBackToHome }: PlayerViewProps) {
                 <div className="text-center space-y-3">
                   {room.currentQuestion ? (
                     <>
-                      <span className="text-[10px] bg-indigo-500/10 text-indigo-300 border border-indigo-500/20 rounded-full px-3 py-1 font-mono uppercase tracking-wider font-semibold inline-block">
-                        {room.currentQuestion.category || 'Allgemeinwissen'}
-                      </span>
+                      <div className="flex flex-col items-center gap-1.5">
+                        <span className="text-[10px] bg-indigo-500/10 text-indigo-300 border border-indigo-500/20 rounded-full px-3 py-1 font-mono uppercase tracking-wider font-semibold inline-block">
+                          {room.currentQuestion.category || 'Allgemeinwissen'}
+                        </span>
+                        <span className={`text-[8px] uppercase tracking-wider font-bold px-2 py-0.5 rounded-full ${
+                          room.currentQuestion.source === 'ai' || room.currentQuestion.id < 0
+                            ? 'bg-purple-500/20 text-purple-300 border border-purple-500/30'
+                            : 'bg-blue-500/20 text-blue-300 border border-blue-500/30'
+                        }`}>
+                          {room.currentQuestion.source === 'ai' || room.currentQuestion.id < 0
+                            ? '✨ Gemini KI'
+                            : '📚 Fragen-Pool'}
+                        </span>
+                      </div>
                       <p className="text-md sm:text-lg font-bold leading-relaxed text-slate-100">
                         {room.currentQuestion.question}
                       </p>
