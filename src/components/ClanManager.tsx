@@ -257,56 +257,56 @@ export default function ClanManager({ selectedClanId, onSelectClan }: ClanManage
   const isMemberOfSelectedClan = currentUser && currentUser.clanId === selectedClanId;
 
   return (
-    <div id="clan-manager-container" className="bg-[#0b0c24]/85 backdrop-blur-xl rounded-2xl border border-white/10 p-6 shadow-2xl text-white relative overflow-hidden">
+    <div id="clan-manager-container" className="bg-white rounded-xl border border-ral-sand p-6 shadow-sm text-ral-charcoal relative overflow-hidden">
       
-      <div className="flex items-center justify-between mb-6 pb-4 border-b border-white/5">
-        <h3 className="text-xl font-extrabold flex items-center gap-2 text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-indigo-300">
-          <Shield className="w-5 h-5 text-blue-400" />
+      <div className="flex items-center justify-between mb-6 pb-4 border-b border-ral-sand">
+        <h3 className="text-md font-bold uppercase tracking-wider flex items-center gap-2 text-ral-charcoal">
+          <Shield className="w-4 h-4 text-ral1001-dark" />
           Clans &amp; Bestenlisten
         </h3>
         <button 
           onClick={() => { fetchClans(); if (currentUser) syncUserStatus(); }}
-          className="text-slate-400 hover:text-indigo-300 transition-colors p-2 rounded-xl hover:bg-white/5 cursor-pointer"
+          className="text-ral-charcoal-light hover:text-ral1001-dark hover:bg-ral-bg transition-colors p-2 rounded-lg cursor-pointer"
           title="Aktualisieren"
         >
-          <RefreshCw className="w-4 h-4" />
+          <RefreshCw className="w-3.5 h-3.5" />
         </button>
       </div>
 
       {error && (
-        <div className="bg-red-500/15 border border-red-500/20 text-red-200 rounded-xl p-4 text-sm mb-6">
+        <div className="bg-red-50 border border-red-200 text-red-800 rounded-lg p-4 text-xs mb-6 font-semibold">
           {error}
         </div>
       )}
 
       {authSuccess && (
-        <div className="bg-emerald-500/15 border border-emerald-500/20 text-emerald-200 rounded-xl p-4 text-sm mb-6">
+        <div className="bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-lg p-4 text-xs mb-6 font-semibold">
           {authSuccess}
         </div>
       )}
 
       {requestStatus && (
-        <div className="bg-blue-500/15 border border-blue-500/20 text-blue-200 rounded-xl p-4 text-sm mb-6">
+        <div className="bg-ral1001-light border border-ral1001/30 text-ral1001-dark rounded-lg p-4 text-xs mb-6 font-semibold">
           {requestStatus}
         </div>
       )}
 
       {/* SECTION 1: AUTHENTICATION */}
       {!currentUser ? (
-        <div className="bg-white/5 border border-white/10 rounded-2xl p-5 mb-8">
-          <div className="flex border-b border-white/10 mb-4">
+        <div className="bg-ral-bg border border-ral-sand rounded-xl p-5 mb-8">
+          <div className="flex border-b border-ral-sand mb-4">
             <button
               onClick={() => { setAuthMode('login'); setError(null); }}
-              className={`flex-1 py-2.5 text-center text-sm font-semibold transition-all cursor-pointer ${
-                authMode === 'login' ? 'text-indigo-400 border-b-2 border-indigo-500' : 'text-slate-400 hover:text-white'
+              className={`flex-1 py-2 text-center text-xs font-bold uppercase tracking-widest transition-all cursor-pointer ${
+                authMode === 'login' ? 'text-ral1001-dark border-b-2 border-ral1001' : 'text-ral-charcoal-light hover:text-ral-charcoal'
               }`}
             >
               Einloggen
             </button>
             <button
               onClick={() => { setAuthMode('register'); setError(null); }}
-              className={`flex-1 py-2.5 text-center text-sm font-semibold transition-all cursor-pointer ${
-                authMode === 'register' ? 'text-indigo-400 border-b-2 border-indigo-500' : 'text-slate-400 hover:text-white'
+              className={`flex-1 py-2 text-center text-xs font-bold uppercase tracking-widest transition-all cursor-pointer ${
+                authMode === 'register' ? 'text-ral1001-dark border-b-2 border-ral1001' : 'text-ral-charcoal-light hover:text-ral-charcoal'
               }`}
             >
               Konto erstellen
@@ -315,33 +315,33 @@ export default function ClanManager({ selectedClanId, onSelectClan }: ClanManage
 
           <form onSubmit={handleAuthSubmit} className="space-y-4">
             <div>
-              <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1.5">
+              <label className="block text-[10px] font-bold text-ral-charcoal-light uppercase tracking-wider mb-1.5">
                 Nickname / Benutzername
               </label>
               <div className="relative flex items-center">
-                <User className="absolute left-3.5 w-4 h-4 text-slate-400 pointer-events-none" />
+                <User className="absolute left-3.5 w-4 h-4 text-ral-charcoal-light/60 pointer-events-none" />
                 <input
                   type="text"
                   placeholder="Dein Spielername"
                   value={authUsername}
                   onChange={(e) => setAuthUsername(e.target.value)}
-                  className="w-full bg-[#05051a]/60 border border-white/10 focus:border-indigo-400/50 rounded-xl pl-10 pr-4 py-2.5 text-sm outline-none transition-colors"
+                  className="w-full bg-white border border-ral-sand focus:border-ral1001 rounded-lg pl-10 pr-4 py-2 text-xs text-ral-charcoal outline-none transition-colors"
                 />
               </div>
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1.5">
+              <label className="block text-[10px] font-bold text-ral-charcoal-light uppercase tracking-wider mb-1.5">
                 Passwort
               </label>
               <div className="relative flex items-center">
-                <Lock className="absolute left-3.5 w-4 h-4 text-slate-400 pointer-events-none" />
+                <Lock className="absolute left-3.5 w-4 h-4 text-ral-charcoal-light/60 pointer-events-none" />
                 <input
                   type="password"
                   placeholder="••••••••"
                   value={authPassword}
                   onChange={(e) => setAuthPassword(e.target.value)}
-                  className="w-full bg-[#05051a]/60 border border-white/10 focus:border-indigo-400/50 rounded-xl pl-10 pr-4 py-2.5 text-sm outline-none transition-colors"
+                  className="w-full bg-white border border-ral-sand focus:border-ral1001 rounded-lg pl-10 pr-4 py-2 text-xs text-ral-charcoal outline-none transition-colors"
                 />
               </div>
             </div>
@@ -349,29 +349,29 @@ export default function ClanManager({ selectedClanId, onSelectClan }: ClanManage
             <button
               type="submit"
               disabled={isLoading}
-              className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 disabled:opacity-50 text-white rounded-xl py-2.5 text-sm font-bold tracking-wide transition-all shadow-lg flex items-center justify-center gap-1.5 cursor-pointer"
+              className="w-full bg-ral1001 hover:bg-ral1001-dark disabled:opacity-50 text-white rounded-lg py-2.5 text-xs font-bold uppercase tracking-widest transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-sm"
             >
               {authMode === 'login' ? 'Einloggen' : 'Konto erstellen'}
-              <ArrowRight className="w-4 h-4" />
+              <ArrowRight className="w-3.5 h-3.5" />
             </button>
           </form>
         </div>
       ) : (
-        <div className="bg-white/5 border border-white/5 rounded-2xl px-5 py-3.5 flex flex-wrap items-center justify-between gap-4 mb-8">
+        <div className="bg-ral-bg border border-ral-sand rounded-xl px-4 py-3 flex flex-wrap items-center justify-between gap-4 mb-8">
           <div className="flex items-center gap-3">
-            <div className="p-2.5 bg-indigo-500/10 text-indigo-400 rounded-xl border border-indigo-500/20">
-              <User className="w-4 h-4" />
+            <div className="p-2 bg-ral1001-light text-ral1001-dark rounded-lg border border-ral1001/20">
+              <User className="w-3.5 h-3.5" />
             </div>
             <div>
-              <div className="text-xs text-slate-400">Angemeldet als:</div>
-              <div className="text-sm font-extrabold text-white">{currentUser.username}</div>
+              <div className="text-[10px] text-ral-charcoal-light uppercase tracking-wider">Angemeldet als:</div>
+              <div className="text-xs font-bold text-ral-charcoal">{currentUser.username}</div>
             </div>
           </div>
           <button
             onClick={handleLogout}
-            className="flex items-center gap-1.5 bg-red-500/10 hover:bg-red-500/25 text-red-300 border border-red-500/20 rounded-xl px-4 py-2 text-xs font-semibold transition-all cursor-pointer"
+            className="flex items-center gap-1.5 bg-red-50 hover:bg-red-100 text-red-700 border border-red-200 rounded-lg px-3 py-1.5 text-[11px] font-bold transition-all cursor-pointer"
           >
-            <LogOut className="w-3.5 h-3.5" />
+            <LogOut className="w-3 h-3" />
             Abmelden
           </button>
         </div>
@@ -380,14 +380,14 @@ export default function ClanManager({ selectedClanId, onSelectClan }: ClanManage
       {/* SECTION 2: CLAN SELECTION & CREATION */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
         <div>
-          <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">
+          <label className="block text-[10px] font-bold text-ral-charcoal-light uppercase tracking-wider mb-2">
             Clan Auswählen
           </label>
           <div className="flex flex-col gap-2">
             <select
               value={selectedClanId || ''}
               onChange={(e) => onSelectClan(e.target.value ? parseInt(e.target.value, 10) : null)}
-              className="w-full bg-[#05051a] border border-white/10 focus:border-indigo-400/50 rounded-xl px-4 py-3 text-sm text-slate-100 outline-none transition-colors"
+              className="w-full bg-ral-bg border border-ral-sand focus:border-ral1001 rounded-lg px-3 py-2 text-xs text-ral-charcoal outline-none transition-colors"
             >
               <option value="">-- Kein Clan (Nur lokales Spiel) --</option>
               {clans.map((c) => (
@@ -401,14 +401,14 @@ export default function ClanManager({ selectedClanId, onSelectClan }: ClanManage
             {selectedClanId !== null && currentUser && !isMemberOfSelectedClan && !isOwnerOfSelectedClan && (
               <button
                 onClick={handleSendJoinRequest}
-                className="w-full bg-indigo-600/30 hover:bg-indigo-600/50 text-indigo-300 border border-indigo-500/30 rounded-xl py-2 text-xs font-bold transition-all cursor-pointer"
+                className="w-full bg-ral1001-light hover:bg-ral1001/20 text-ral1001-dark border border-ral1001/30 rounded-lg py-2 text-[10px] font-bold uppercase tracking-wider transition-all cursor-pointer"
               >
                 Beitrittsanfrage für diesen Clan senden
               </button>
             )}
             
             {selectedClanId !== null && isMemberOfSelectedClan && (
-              <span className="text-xs text-emerald-400 font-medium text-center bg-emerald-500/10 border border-emerald-500/25 rounded-xl py-2">
+              <span className="text-[10px] text-emerald-800 font-bold uppercase tracking-wider text-center bg-emerald-50 border border-emerald-200 rounded-lg py-2">
                 ✓ Du bist Mitglied dieses Clans
               </span>
             )}
@@ -416,7 +416,7 @@ export default function ClanManager({ selectedClanId, onSelectClan }: ClanManage
         </div>
 
         <div>
-          <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">
+          <label className="block text-[10px] font-bold text-ral-charcoal-light uppercase tracking-wider mb-2">
             Neuen Clan gründen
           </label>
           {currentUser ? (
@@ -426,19 +426,19 @@ export default function ClanManager({ selectedClanId, onSelectClan }: ClanManage
                 placeholder="z.B. Die Quiz-Elite"
                 value={newClanName}
                 onChange={(e) => setNewClanName(e.target.value)}
-                className="flex-1 bg-white/5 border border-white/10 focus:border-indigo-400/50 rounded-xl px-4 py-3 text-sm text-slate-100 outline-none transition-colors"
+                className="flex-1 bg-ral-bg border border-ral-sand focus:border-ral1001 rounded-lg px-3 py-2 text-xs text-ral-charcoal outline-none transition-colors"
               />
               <button
                 type="submit"
                 disabled={isLoading || !newClanName.trim()}
-                className="bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white rounded-xl px-4 py-3 text-sm font-medium transition-colors flex items-center justify-center cursor-pointer"
+                className="bg-ral1001 hover:bg-ral1001-dark disabled:opacity-50 text-white rounded-lg px-3 py-2 text-xs font-bold transition-colors flex items-center justify-center cursor-pointer"
               >
                 <Plus className="w-4 h-4" />
               </button>
             </form>
           ) : (
-            <div className="bg-[#05051a]/40 border border-white/5 rounded-xl p-3 text-xs text-slate-400 text-center flex items-center justify-center gap-1.5 h-[46px]">
-              <Lock className="w-3.5 h-3.5 text-indigo-400" />
+            <div className="bg-ral-bg border border-ral-sand rounded-lg p-3 text-[11px] text-ral-charcoal-light text-center flex items-center justify-center gap-1.5 h-[38px]">
+              <Lock className="w-3.5 h-3.5 text-ral1001-dark" />
               Bitte einloggen, um einen Clan zu gründen.
             </div>
           )}
@@ -450,30 +450,30 @@ export default function ClanManager({ selectedClanId, onSelectClan }: ClanManage
         <motion.div
           initial={{ opacity: 0, height: 0 }}
           animate={{ opacity: 1, height: 'auto' }}
-          className="bg-indigo-500/5 border border-indigo-500/20 rounded-2xl p-4 mb-8"
+          className="bg-ral1001-light/40 border border-ral1001/30 rounded-xl p-4 mb-8"
         >
-          <h4 className="text-sm font-bold text-indigo-300 flex items-center gap-1.5 mb-3">
-            <Users className="w-4 h-4" />
+          <h4 className="text-xs font-bold text-ral1001-dark uppercase tracking-wider flex items-center gap-1.5 mb-3">
+            <Users className="w-3.5 h-3.5" />
             Ausstehende Beitrittsanfragen ({joinRequests.length})
           </h4>
           <div className="space-y-2">
             {joinRequests.map((req) => (
-              <div key={req.id} className="flex items-center justify-between bg-[#05051a]/60 border border-white/5 rounded-xl p-3">
-                <span className="text-sm font-semibold">{req.username}</span>
+              <div key={req.id} className="flex items-center justify-between bg-white border border-ral-sand rounded-lg p-3">
+                <span className="text-xs font-bold text-ral-charcoal">{req.username}</span>
                 <div className="flex gap-1.5">
                   <button
                     onClick={() => handleRespondRequest(req.id, 'accepted')}
-                    className="p-1.5 bg-emerald-500/15 hover:bg-emerald-500/30 text-emerald-300 rounded-lg border border-emerald-500/25 transition-all cursor-pointer"
+                    className="p-1.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 rounded-lg border border-emerald-200 transition-all cursor-pointer"
                     title="Akzeptieren"
                   >
-                    <Check className="w-4 h-4" />
+                    <Check className="w-3.5 h-3.5" />
                   </button>
                   <button
                     onClick={() => handleRespondRequest(req.id, 'denied')}
-                    className="p-1.5 bg-red-500/15 hover:bg-red-500/30 text-red-300 rounded-lg border border-red-500/25 transition-all cursor-pointer"
+                    className="p-1.5 bg-red-50 hover:bg-red-100 text-red-700 rounded-lg border border-red-200 transition-all cursor-pointer"
                     title="Ablehnen"
                   >
-                    <X className="w-4 h-4" />
+                    <X className="w-3.5 h-3.5" />
                   </button>
                 </div>
               </div>
@@ -487,60 +487,60 @@ export default function ClanManager({ selectedClanId, onSelectClan }: ClanManage
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
-          className="border-t border-white/10 pt-6"
+          className="border-t border-ral-sand pt-6"
         >
           <div className="flex items-center justify-between gap-4 mb-4">
-            <h4 className="text-md font-bold text-slate-200 flex items-center gap-2">
-              <Trophy className="w-4 h-4 text-amber-400 animate-bounce" />
+            <h4 className="text-xs font-bold text-ral-charcoal uppercase tracking-wider flex items-center gap-2">
+              <Trophy className="w-3.5 h-3.5 text-amber-500 animate-pulse" />
               Clan-Rangliste ({players.length} Spieler)
             </h4>
           </div>
 
           {players.length === 0 ? (
-            <div className="bg-[#05051a]/30 rounded-2xl p-8 border border-white/5 text-center">
-              <Users className="w-8 h-8 text-slate-500 mx-auto mb-2" />
-              <p className="text-sm text-slate-300">Noch keine Spieler im Clan registriert.</p>
-              <p className="text-xs text-slate-400 mt-1">Gibt anderen Spielern Bescheid, Beitrittsanfragen zu senden!</p>
+            <div className="bg-ral-bg rounded-xl p-8 border border-ral-sand text-center">
+              <Users className="w-6 h-6 text-ral-charcoal-light/40 mx-auto mb-2" />
+              <p className="text-xs font-semibold text-ral-charcoal">Noch keine Spieler im Clan registriert.</p>
+              <p className="text-[10px] text-ral-charcoal-light mt-1">Gibt anderen Spielern Bescheid, Beitrittsanfragen zu senden!</p>
             </div>
           ) : (
-            <div className="bg-[#05051a]/55 rounded-xl border border-white/10 overflow-hidden">
-              <div className="grid grid-cols-12 bg-white/5 px-4 py-2.5 text-[10px] font-bold text-slate-400 uppercase tracking-wider border-b border-white/10">
+            <div className="bg-white rounded-xl border border-ral-sand overflow-hidden">
+              <div className="grid grid-cols-12 bg-ral-bg px-4 py-2 text-[9px] font-bold text-ral-charcoal-light uppercase tracking-wider border-b border-ral-sand">
                 <span className="col-span-1 text-center">#</span>
                 <span className="col-span-5">Spieler</span>
                 <span className="col-span-2 text-center">Spiele</span>
                 <span className="col-span-2 text-center">Siege</span>
-                <span className="col-span-2 text-center">Quote</span>
+                <span className="col-span-2 text-center font-mono">Quote</span>
               </div>
-              <div className="divide-y divide-white/10 max-h-60 overflow-y-auto">
+              <div className="divide-y divide-ral-sand max-h-60 overflow-y-auto">
                 {players.map((p, index) => {
                   const winRate = p.rounds_played > 0 ? Math.round((p.wins / p.rounds_played) * 100) : 0;
                   return (
                     <div 
                       key={p.id} 
-                      className={`grid grid-cols-12 px-4 py-3 text-sm items-center hover:bg-white/5 transition-colors ${
+                      className={`grid grid-cols-12 px-4 py-2.5 text-xs items-center hover:bg-ral-bg transition-colors ${
                         index === 0 ? 'bg-amber-500/5' : ''
                       }`}
                     >
                       <span className="col-span-1 text-center font-bold">
                         {index === 0 ? (
-                          <span className="text-amber-400">👑</span>
+                          <span className="text-amber-500 text-xs">👑</span>
                         ) : index === 1 ? (
-                          <span className="text-slate-300">🥈</span>
+                          <span className="text-slate-400 text-xs">🥈</span>
                         ) : index === 2 ? (
-                          <span className="text-amber-600">🥉</span>
+                          <span className="text-amber-700 text-xs">🥉</span>
                         ) : (
-                          <span className="text-slate-500">{index + 1}</span>
+                          <span className="text-ral-charcoal-light/60 font-mono text-[10px]">{index + 1}</span>
                         )}
                       </span>
-                      <span className="col-span-5 font-bold text-slate-100 truncate flex items-center gap-1.5">
+                      <span className="col-span-5 font-bold text-ral-charcoal truncate flex items-center gap-1.5">
                         {p.name}
                         {currentUser && p.name === currentUser.username && (
-                          <span className="text-[9px] bg-indigo-500/10 border border-indigo-500/25 px-1.5 py-0.5 rounded text-indigo-300 font-mono">Du</span>
+                          <span className="text-[8px] bg-ral1001-light border border-ral1001/30 px-1.5 py-0.5 rounded text-ral1001-dark font-mono uppercase tracking-wider font-bold">Du</span>
                         )}
                       </span>
-                      <span className="col-span-2 text-center text-slate-300">{p.rounds_played}</span>
-                      <span className="col-span-2 text-center text-emerald-400 font-semibold">{p.wins}</span>
-                      <span className="col-span-2 text-center font-mono text-xs text-indigo-300">{winRate}%</span>
+                      <span className="col-span-2 text-center text-ral-charcoal-light">{p.rounds_played}</span>
+                      <span className="col-span-2 text-center text-emerald-700 font-bold">{p.wins}</span>
+                      <span className="col-span-2 text-center font-mono text-xs text-ral1001-dark font-bold">{winRate}%</span>
                     </div>
                   );
                 })}
