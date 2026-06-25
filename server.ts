@@ -135,7 +135,7 @@ async function generateGeminiQuestion(apiKey: string, category: string): Promise
       : randomCategories[Math.floor(Math.random() * randomCategories.length)];
 
     const response = await ai.models.generateContent({
-      model: 'gemini-3.5-flash',
+      model: 'gemini-2.5-flash',
       contents: `Generiere eine anspruchsvolle und unterhaltsame Trivia-Quizfrage auf Deutsch für die Kategorie "${categoryPrompt}". Stelle sicher, dass korrekte deutsche Rechtschreibung und Umlaute (ä, ö, ü, ß) verwendet werden und keine Sonderzeichen verfälscht sind (nicht "lteste" sondern "älteste", nicht "heit" sondern "heißt"). Die Frage sollte präzise sein und eine kurze, eindeutige Antwort haben (maximal 1 bis 3 Wörter).`,
       config: {
         responseMimeType: 'application/json',
