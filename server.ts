@@ -1083,7 +1083,8 @@ async function startApp() {
   await initDb();
 
   // Create the development Vite server middleware in dev mode
-  if (process.env.NODE_ENV !== 'production') {
+  const isProduction = process.env.NODE_ENV === 'production' || __dirname.includes('dist');
+  if (!isProduction) {
     const vite = await createViteServer({
       server: { middlewareMode: true },
       appType: 'spa',
