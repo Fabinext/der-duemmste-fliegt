@@ -1122,6 +1122,13 @@ app.post('/api/room/:roomCode/action', async (req, res) => {
         break;
       }
 
+      case 'startFinaleTimer': {
+        if (room.status === 'finale') {
+          room.currentQuestionActiveAt = Date.now();
+        }
+        break;
+      }
+
       case 'eliminatePlayerDirectly': {
         const { name } = payload;
         eliminatePlayer(room, name);
