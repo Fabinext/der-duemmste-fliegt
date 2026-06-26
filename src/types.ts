@@ -57,6 +57,7 @@ export interface GameRoom {
   finaleActivePlayer: string | null;
   finaleQuestionIndex: number;
   winner: string | null;
+  finaleGivenAnswers?: Record<string, string[]>;
 }
 
 export interface Clan {
