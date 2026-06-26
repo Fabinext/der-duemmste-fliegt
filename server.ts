@@ -467,7 +467,8 @@ app.get('/api/room/:roomCode', (req, res) => {
     activePlayerName: room.status === 'finale' ? room.finaleActivePlayer : (room.players[room.activePlayerIndex]?.name || null),
     finaleQuestionIndex: room.finaleQuestionIndex,
     finaleScores: room.finaleScores,
-    finaleGivenAnswers: room.finaleGivenAnswers || null
+    finaleGivenAnswers: room.finaleGivenAnswers || null,
+    finaleQuestions: room.status === 'ended' ? room.finaleQuestions : []
   });
 });
 
@@ -968,39 +969,19 @@ app.post('/api/room/:roomCode/action', async (req, res) => {
           const isTimeoutVal = isTimeout === true;
           const { givenAnswer } = payload || {};
 
-          if (isTimeoutVal) {
-            // Mark current question as wrong
-            scores[room.finaleQuestionIndex] = 0;
-            if (room.finaleGivenAnswers) {
-              if (!room.finaleGivenAnswers[activeName]) {
-                room.finaleGivenAnswers[activeName] = Array(20).fill('');
-              }
-              room.finaleGivenAnswers[activeName][room.finaleQuestionIndex] = givenAnswer || 'Zeit abgelaufen';
+          // If it was a timeout, isCorrect is false.
+          const finalCorrect = isTimeoutVal ? false : !!isCorrect;
+
+          scores[room.finaleQuestionIndex] = finalCorrect ? 1 : 0;
+          
+          if (!finalCorrect && room.finaleGivenAnswers) {
+            if (!room.finaleGivenAnswers[activeName]) {
+              room.finaleGivenAnswers[activeName] = Array(20).fill('');
             }
-            
-            // Mark next question as wrong too, if there is one
-            if (room.finaleQuestionIndex + 1 < 20) {
-              scores[room.finaleQuestionIndex + 1] = 0;
-              if (room.finaleGivenAnswers) {
-                if (!room.finaleGivenAnswers[activeName]) {
-                  room.finaleGivenAnswers[activeName] = Array(20).fill('');
-                }
-                room.finaleGivenAnswers[activeName][room.finaleQuestionIndex + 1] = 'Übersprungen wegen Zeitspiel';
-              }
-              room.finaleQuestionIndex += 2;
-            } else {
-              room.finaleQuestionIndex += 1;
-            }
-          } else {
-            scores[room.finaleQuestionIndex] = isCorrect ? 1 : 0;
-            if (!isCorrect && room.finaleGivenAnswers) {
-              if (!room.finaleGivenAnswers[activeName]) {
-                room.finaleGivenAnswers[activeName] = Array(20).fill('');
-              }
-              room.finaleGivenAnswers[activeName][room.finaleQuestionIndex] = givenAnswer || '';
-            }
-            room.finaleQuestionIndex += 1;
+            room.finaleGivenAnswers[activeName][room.finaleQuestionIndex] = givenAnswer || (isTimeoutVal ? 'Zeit abgelaufen' : 'Falsche Antwort');
           }
+          
+          room.finaleQuestionIndex += 1;
 
           // Move to next question or switch player
           if (room.finaleQuestionIndex < 20) {
