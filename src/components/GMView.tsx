@@ -19,6 +19,9 @@ export default function GMView({ roomCode, gmToken, onExit }: GMViewProps) {
   const [selectedCategory, setSelectedCategory] = useState('Zufall');
   const [manualVotes, setManualVotes] = useState<Record<string, string>>({});
   const [timerSeconds, setTimerSeconds] = useState(5);
+  const [showWrongAnswerInput, setShowWrongAnswerInput] = useState(false);
+  const [wrongAnswerText, setWrongAnswerText] = useState('');
+  const [isTimeoutState, setIsTimeoutState] = useState(false);
   const [isAnswerRevealed, setIsAnswerRevealed] = useState(false);
   const [expandedPlayer, setExpandedPlayer] = useState<string | null>(null);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
@@ -80,7 +83,7 @@ export default function GMView({ roomCode, gmToken, onExit }: GMViewProps) {
 
   // Handle 5-second countdown timer in Finale Mode
   useEffect(() => {
-    if (room?.status === 'finale' && room.currentQuestion) {
+    if (room?.status === 'finale' && room.currentQuestion && room.currentQuestionActiveAt) {
       setIsAnswerRevealed(false);
       setTimerSeconds(5);
       
@@ -98,7 +101,8 @@ export default function GMView({ roomCode, gmToken, onExit }: GMViewProps) {
             timerRef.current = null;
           }
           setTimerSeconds(0);
-          handleGMAction('submitAnswer', { isCorrect: false });
+          setIsTimeoutState(true);
+          setShowWrongAnswerInput(true);
         } else {
           setTimerSeconds(currentSeconds);
         }
@@ -108,6 +112,7 @@ export default function GMView({ roomCode, gmToken, onExit }: GMViewProps) {
         clearInterval(timerRef.current);
         timerRef.current = null;
       }
+      setTimerSeconds(5);
     }
 
     return () => {
@@ -116,7 +121,7 @@ export default function GMView({ roomCode, gmToken, onExit }: GMViewProps) {
         timerRef.current = null;
       }
     };
-  }, [room?.status, room?.currentQuestion?.id, room?.currentQuestion?.question, room?.finaleQuestionIndex, room?.finaleActivePlayer]);
+  }, [room?.status, room?.currentQuestion?.id, room?.currentQuestion?.question, room?.currentQuestionActiveAt, room?.finaleQuestionIndex, room?.finaleActivePlayer]);
 
   const handleGMAction = async (action: string, payload: any = {}) => {
     try {
@@ -1049,19 +1054,28 @@ export default function GMView({ roomCode, gmToken, onExit }: GMViewProps) {
                       </div>
                       
                       {/* Timer Display */}
-                      <div className="flex items-center gap-2 bg-[#0c0c24] px-3 py-1.5 rounded-lg border border-white/10">
-                        <Timer className={`w-4 h-4 ${timerSeconds <= 2 ? 'text-red-500 animate-pulse' : 'text-slate-400'}`} />
-                        <span className="text-xs text-slate-400">Verbleibende Zeit:</span>
-                        <span className={`text-md font-mono font-bold ${timerSeconds <= 2 ? 'text-red-500' : 'text-slate-200'}`}>
-                          {timerSeconds}s
-                        </span>
-                      </div>
+                      {!room.currentQuestionActiveAt && room.currentQuestion ? (
+                        <button
+                          onClick={() => handleGMAction('startFinaleTimer')}
+                          className="flex items-center gap-1.5 bg-amber-500 hover:bg-amber-400 text-slate-950 px-3 py-1.5 rounded-lg text-xs font-black animate-pulse cursor-pointer uppercase transition-all"
+                        >
+                          <Play className="w-3.5 h-3.5 fill-current" /> Timer starten (5s)
+                        </button>
+                      ) : (
+                        <div className="flex items-center gap-2 bg-[#0c0c24] px-3 py-1.5 rounded-lg border border-white/10">
+                          <Timer className={`w-4 h-4 ${timerSeconds <= 2 ? 'text-red-500 animate-pulse' : 'text-slate-400'}`} />
+                          <span className="text-xs text-slate-400">Verbleibende Zeit:</span>
+                          <span className={`text-md font-mono font-bold ${timerSeconds <= 2 ? 'text-red-500' : 'text-slate-200'}`}>
+                            {timerSeconds}s
+                          </span>
+                        </div>
+                      )}
                     </div>
                   )}
 
                   {!room.currentQuestion ? (
                     <div className="text-center py-6">
-                      <p className="text-xs text-slate-400 mb-4">Fordere Frage {room.finaleQuestionIndex + 1} an. Die Zeit (5s) startet sofort!</p>
+                      <p className="text-xs text-slate-400 mb-4">Fordere Frage {room.finaleQuestionIndex + 1} an. Die Zeit (5s) startet erst, wenn du den Timer manuell aktivierst!</p>
                       <button
                         onClick={() => handleGMAction('getQuestion', { category: 'Zufall' })}
                         className="bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-3 px-8 rounded-xl text-sm transition-all cursor-pointer"
@@ -1092,20 +1106,89 @@ export default function GMView({ roomCode, gmToken, onExit }: GMViewProps) {
                         </button>
                       </div>
 
-                      <div className="grid grid-cols-2 gap-3 pt-4 border-t border-white/10">
-                        <button
-                          onClick={() => handleGMAction('submitAnswer', { isCorrect: false })}
-                          className="bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/30 py-3 rounded-xl text-xs font-bold transition-all cursor-pointer"
-                        >
-                          FALSCH / ZEIT UM
-                        </button>
-                        <button
-                          onClick={() => handleGMAction('submitAnswer', { isCorrect: true })}
-                          className="bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 py-3 rounded-xl text-xs font-bold transition-all cursor-pointer"
-                        >
-                          RICHTIG
-                        </button>
-                      </div>
+                      {showWrongAnswerInput ? (
+                        <div className="bg-red-500/5 rounded-xl p-4 border border-red-500/20 space-y-3 pt-4">
+                          <div className="flex items-center gap-2 text-red-400">
+                            <AlertTriangle className="w-4 h-4" />
+                            <span className="text-xs font-bold uppercase tracking-wider">
+                              {isTimeoutState ? 'Zeit abgelaufen!' : 'Antwort als Falsch gewertet'}
+                            </span>
+                          </div>
+                          <p className="text-xs text-slate-400">
+                            Trage optional die gegebene falsche Antwort von <strong className="text-slate-200">{room.finaleActivePlayer}</strong> ein:
+                          </p>
+                          <input
+                            type="text"
+                            value={wrongAnswerText}
+                            onChange={(e) => setWrongAnswerText(e.target.value)}
+                            placeholder="z.B. Paris (Richtige Antwort: Berlin)"
+                            className="w-full bg-[#0c0c24] text-slate-100 border border-white/15 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-indigo-500"
+                            autoFocus
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter') {
+                                handleGMAction('submitAnswer', { 
+                                  isCorrect: false, 
+                                  isTimeout: isTimeoutState, 
+                                  givenAnswer: wrongAnswerText || (isTimeoutState ? 'Zeit abgelaufen' : 'Falsche Antwort') 
+                                });
+                                setShowWrongAnswerInput(false);
+                                setWrongAnswerText('');
+                                setIsTimeoutState(false);
+                              }
+                            }}
+                          />
+                          <div className="flex gap-2">
+                            <button
+                              onClick={() => {
+                                handleGMAction('submitAnswer', { 
+                                  isCorrect: false, 
+                                  isTimeout: isTimeoutState, 
+                                  givenAnswer: wrongAnswerText || (isTimeoutState ? 'Zeit abgelaufen' : 'Falsche Antwort') 
+                                });
+                                setShowWrongAnswerInput(false);
+                                setWrongAnswerText('');
+                                setIsTimeoutState(false);
+                              }}
+                              className="flex-1 bg-red-600 hover:bg-red-500 text-white font-bold py-2 rounded-lg text-xs transition-all cursor-pointer"
+                            >
+                              Antwort speichern & Weiter
+                            </button>
+                            <button
+                              onClick={() => {
+                                handleGMAction('submitAnswer', { 
+                                  isCorrect: false, 
+                                  isTimeout: isTimeoutState, 
+                                  givenAnswer: isTimeoutState ? 'Zeit abgelaufen' : 'Falsche Antwort' 
+                                });
+                                setShowWrongAnswerInput(false);
+                                setWrongAnswerText('');
+                                setIsTimeoutState(false);
+                              }}
+                              className="px-3 bg-white/5 hover:bg-white/10 text-slate-400 border border-white/10 rounded-lg text-[10px] uppercase font-bold transition-all cursor-pointer"
+                            >
+                              Überspringen
+                            </button>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="grid grid-cols-2 gap-3 pt-4 border-t border-white/10">
+                          <button
+                            onClick={() => {
+                              setIsTimeoutState(false);
+                              setShowWrongAnswerInput(true);
+                            }}
+                            className="bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/30 py-3 rounded-xl text-xs font-bold transition-all cursor-pointer"
+                          >
+                            FALSCH / ZEIT UM
+                          </button>
+                          <button
+                            onClick={() => handleGMAction('submitAnswer', { isCorrect: true })}
+                            className="bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 py-3 rounded-xl text-xs font-bold transition-all cursor-pointer"
+                          >
+                            RICHTIG
+                          </button>
+                        </div>
+                      )}
                     </div>
                   )}
                 </div>
