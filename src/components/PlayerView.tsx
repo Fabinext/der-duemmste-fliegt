@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { GameRoom } from '../types.ts';
-import { Shield, Vote, Users, HelpCircle, Check, AlertCircle, Heart, LogOut } from 'lucide-react';
+import { Shield, Vote, Users, HelpCircle, Check, AlertCircle, Heart, LogOut, Award } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 
 interface PlayerViewProps {
@@ -73,7 +73,7 @@ export default function PlayerView({ onBackToHome }: PlayerViewProps) {
     }
 
     const interval = setInterval(() => {
-      const elapsed = Date.now() - room.currentQuestionActiveAt;
+      const elapsed = Date.now() - room.currentQuestionActiveAt!;
       const remaining = Math.max(0, 5000 - elapsed);
       const remainingSecs = Math.ceil(remaining / 1000);
       
@@ -572,6 +572,78 @@ export default function PlayerView({ onBackToHome }: PlayerViewProps) {
                       <p className="text-xs text-slate-400 font-medium">Warten auf Frage...</p>
                     </div>
                   )}
+                </div>
+              </div>
+            )}
+
+            {/* FINALE SCORES & ANSWERS COMPANION (Mobile) */}
+            {room.status === 'finale' && room.finaleScores && (
+              <div className="bg-[#0b0c24]/90 border border-white/10 rounded-2xl p-5 space-y-4 shadow-xl">
+                <h3 className="text-xs font-extrabold text-amber-400 uppercase tracking-widest flex items-center gap-1.5 border-b border-white/5 pb-2">
+                  <Award className="w-4 h-4 text-amber-400" />
+                  Finale: 20-Fragen-Duell
+                </h3>
+                
+                <div className="space-y-4">
+                  {room.players.filter((p: any) => !p.isEliminated).map((p: any) => {
+                    const playerScores = room.finaleScores[p.name] || [];
+                    const correctCount = playerScores.filter((s: number) => s === 1).length;
+                    const wrongCount = playerScores.filter((s: number) => s === 0).length;
+                    const playerAnswers = (room.finaleGivenAnswers && room.finaleGivenAnswers[p.name]) || [];
+
+                    return (
+                      <div key={p.name} className="space-y-2 bg-[#05051a]/40 border border-white/5 rounded-xl p-3">
+                        <div className="flex justify-between items-center">
+                          <span className={`text-sm font-bold ${p.name === room.activePlayerName ? 'text-indigo-300' : 'text-slate-300'}`}>
+                            {p.name} {p.name === room.activePlayerName && '(Am Zug)'}
+                          </span>
+                          <span className="text-xs font-mono text-slate-400">
+                            {correctCount} / 20 Richtig
+                          </span>
+                        </div>
+                        
+                        {/* 20 Dots Grid */}
+                        <div className="grid grid-cols-10 gap-1 pt-1">
+                          {Array.from({ length: 20 }).map((_, i) => {
+                            const val = playerScores[i];
+                            return (
+                              <span
+                                key={i}
+                                className={`h-2 rounded-full border transition-all ${
+                                  val === 1
+                                    ? 'bg-emerald-500 border-emerald-400'
+                                    : val === 0
+                                    ? 'bg-red-500 border-red-400'
+                                    : 'bg-white/5 border-white/10'
+                                }`}
+                                title={`Frage ${i + 1}`}
+                              ></span>
+                            );
+                          })}
+                        </div>
+
+                        {/* List of wrong answers if any */}
+                        {wrongCount > 0 && (
+                          <div className="mt-2 pt-2 border-t border-white/5 space-y-1">
+                            <span className="text-[9px] uppercase tracking-wider text-red-400 font-bold block">Gegebene falsche Antworten:</span>
+                            <div className="space-y-1 max-h-24 overflow-y-auto">
+                              {playerAnswers.map((ans: string, qIdx: number) => {
+                                if (ans && playerScores[qIdx] === 0) {
+                                  return (
+                                    <div key={qIdx} className="text-[10px] text-slate-400 font-mono flex justify-between">
+                                      <span>Frage {qIdx + 1}:</span>
+                                      <span className="text-red-300 font-semibold">{ans}</span>
+                                    </div>
+                                  );
+                                }
+                                return null;
+                              })}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
             )}
