@@ -28,6 +28,7 @@ export default function GMView({ roomCode, gmToken, onExit }: GMViewProps) {
   const lastUpdatedRef = useRef<number>(0);
 
   const [apiTestStatus, setApiTestStatus] = useState<'idle' | 'testing' | 'success' | 'error'>('idle');
+  const [selectedEvalPlayer, setSelectedEvalPlayer] = useState<string | null>(null);
   const [apiTestError, setApiTestError] = useState<string | null>(null);
 
   const handleTestApiKey = async () => {
@@ -1222,6 +1223,113 @@ export default function GMView({ roomCode, gmToken, onExit }: GMViewProps) {
                   <div className="bg-[#0c0c24]/50 rounded-xl p-4 border border-white/10 max-w-xs mx-auto">
                     <span className="text-[10px] font-mono text-slate-500 block uppercase tracking-wider">Clan Statistiken</span>
                     <p className="text-xs text-emerald-400 font-semibold mt-1">Sieg im Clan-Leaderboard verbucht! 🏆</p>
+                  </div>
+                )}
+
+                {/* 20 Questions Finale Evaluation Details */}
+                {room.finaleScores && Object.keys(room.finaleScores).length > 0 && (
+                  <div className="mt-8 text-left border-t border-white/10 pt-6 space-y-4 max-w-2xl mx-auto">
+                    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 border-b border-white/5 pb-3">
+                      <h4 className="text-xs font-extrabold uppercase tracking-widest text-slate-300">
+                        Finale-Auswertung (Frage für Frage)
+                      </h4>
+                      {/* Player Tabs */}
+                      <div className="flex gap-2">
+                        {Object.keys(room.finaleScores).map((pName) => {
+                          const isActive = (selectedEvalPlayer || Object.keys(room.finaleScores!)[0]) === pName;
+                          return (
+                            <button
+                              key={pName}
+                              onClick={() => setSelectedEvalPlayer(pName)}
+                              className={`px-3 py-1 rounded text-xs font-bold transition-all cursor-pointer ${
+                                isActive
+                                  ? 'bg-indigo-600 text-white border border-indigo-500 shadow-md'
+                                  : 'bg-white/5 text-slate-400 hover:bg-white/10 border border-white/5'
+                              }`}
+                            >
+                              {pName}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+
+                    {/* Questions list for selected player */}
+                    {(() => {
+                      const activeEvalP = selectedEvalPlayer || Object.keys(room.finaleScores!)[0];
+                      const playerScores = room.finaleScores![activeEvalP] || [];
+                      const playerGivenAnswers = (room.finaleGivenAnswers && room.finaleGivenAnswers[activeEvalP]) || [];
+                      const questions = room.finaleQuestions || [];
+
+                      if (!activeEvalP) return <p className="text-xs text-slate-500">Keine Daten verfügbar.</p>;
+
+                      return (
+                        <div className="space-y-3 max-h-[350px] overflow-y-auto pr-2 custom-scrollbar">
+                          {questions.map((q, idx) => {
+                            const score = playerScores[idx];
+                            // Skip if -1 (means advantage offset was not part of their questions)
+                            if (score === -1) return null;
+
+                            const isCorrect = score === 1;
+                            const wrongAnswer = playerGivenAnswers[idx];
+
+                            return (
+                              <div
+                                key={idx}
+                                className={`p-3.5 rounded-xl border transition-all ${
+                                  isCorrect
+                                    ? 'bg-emerald-500/5 border-emerald-500/20'
+                                    : 'bg-red-500/5 border-red-500/20'
+                                }`}
+                              >
+                                <div className="flex items-start gap-3">
+                                  <div className="mt-0.5">
+                                    {isCorrect ? (
+                                      <CheckCircle className="w-4 h-4 text-emerald-400 shrink-0" />
+                                    ) : (
+                                      <XCircle className="w-4 h-4 text-red-400 shrink-0" />
+                                    )}
+                                  </div>
+                                  <div className="space-y-1 flex-1">
+                                    <div className="flex items-center justify-between">
+                                      <span className="text-[10px] font-mono text-slate-500 uppercase">
+                                        Frage {idx + 1} • {q.category || 'Allgemeinwissen'}
+                                      </span>
+                                      <span
+                                        className={`text-[9px] uppercase tracking-wider px-1.5 py-0.5 rounded font-black ${
+                                          isCorrect
+                                            ? 'bg-emerald-500/10 text-emerald-400'
+                                            : 'bg-red-500/10 text-red-400'
+                                        }`}
+                                      >
+                                        {isCorrect ? 'Richtig' : 'Falsch'}
+                                      </span>
+                                    </div>
+                                    <p className="text-xs text-slate-200 font-semibold leading-relaxed">
+                                      {q.question}
+                                    </p>
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1">
+                                      <div>
+                                        <span className="text-[9px] uppercase tracking-wider text-slate-500 block">Richtige Antwort:</span>
+                                        <span className="text-xs text-emerald-300 font-bold">{q.answer}</span>
+                                      </div>
+                                      {!isCorrect && (
+                                        <div>
+                                          <span className="text-[9px] uppercase tracking-wider text-red-400/80 block">Eingegebene Antwort:</span>
+                                          <span className="text-xs text-red-300 font-mono font-bold">
+                                            {wrongAnswer || 'Falsche Antwort (kein Text)'}
+                                          </span>
+                                        </div>
+                                      )}
+                                    </div>
+                                  </div>
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      );
+                    })()}
                   </div>
                 )}
 
