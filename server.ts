@@ -84,6 +84,7 @@ interface GameRoom {
   finaleQuestionIndex: number;
   winner: string | null;
   lastUpdated: number;
+  finaleGivenAnswers?: Record<string, string[]>;
 }
 
 // In-memory active rooms
@@ -416,6 +417,7 @@ app.post('/api/room/create', (req, res) => {
     tieBreakerResolved: false,
     finaleQuestions: [],
     finaleScores: {},
+    finaleGivenAnswers: {},
     finaleActivePlayer: null,
     finaleQuestionIndex: 0,
     winner: null,
@@ -464,7 +466,8 @@ app.get('/api/room/:roomCode', (req, res) => {
     currentQuestionActiveAt: room.currentQuestionActiveAt || null,
     activePlayerName: room.status === 'finale' ? room.finaleActivePlayer : (room.players[room.activePlayerIndex]?.name || null),
     finaleQuestionIndex: room.finaleQuestionIndex,
-    finaleScores: room.finaleScores
+    finaleScores: room.finaleScores,
+    finaleGivenAnswers: room.finaleGivenAnswers || null
   });
 });
 
@@ -667,8 +670,10 @@ function setupFinale(room: GameRoom) {
 
   room.finaleQuestions = selectedQuestions;
   room.finaleScores = {};
+  room.finaleGivenAnswers = {};
   active.forEach(p => {
     room.finaleScores[p.name] = Array(20).fill(-1); // -1 means pending
+    room.finaleGivenAnswers![p.name] = Array(20).fill('');
   });
 
   // Calculate lives difference
@@ -703,7 +708,7 @@ function setupFinale(room: GameRoom) {
   room.finaleActivePlayer = p1.name;
   room.finaleQuestionIndex = p1Advantage;
   room.currentQuestion = room.finaleQuestions[p1Advantage] || null;
-  room.currentQuestionActiveAt = Date.now();
+  room.currentQuestionActiveAt = null;
 }
 
 // API: GM ACTIONS
@@ -790,7 +795,7 @@ app.post('/api/room/:roomCode/action', async (req, res) => {
       case 'getQuestion': {
         if (room.status === 'finale') {
           room.currentQuestion = room.finaleQuestions[room.finaleQuestionIndex];
-          room.currentQuestionActiveAt = Date.now();
+          room.currentQuestionActiveAt = null;
           break;
         }
         const { category } = payload;
@@ -837,7 +842,7 @@ app.post('/api/room/:roomCode/action', async (req, res) => {
               room.aiQuestionsUsed.push(geminiResult.question);
               room.finaleQuestions[room.finaleQuestionIndex] = newQ;
               room.currentQuestion = newQ;
-              room.currentQuestionActiveAt = Date.now();
+              room.currentQuestionActiveAt = null;
               return res.json(room);
             } catch (err) {
               // fallback below
@@ -849,7 +854,7 @@ app.post('/api/room/:roomCode/action', async (req, res) => {
           const newQ: TriviaQuestion = { ...presetQ, source: 'preset' };
           room.finaleQuestions[room.finaleQuestionIndex] = newQ;
           room.currentQuestion = newQ;
-          room.currentQuestionActiveAt = Date.now();
+          room.currentQuestionActiveAt = null;
           break;
         }
 
@@ -961,27 +966,46 @@ app.post('/api/room/:roomCode/action', async (req, res) => {
 
           const scores = room.finaleScores[activeName];
           const isTimeoutVal = isTimeout === true;
+          const { givenAnswer } = payload || {};
 
           if (isTimeoutVal) {
             // Mark current question as wrong
             scores[room.finaleQuestionIndex] = 0;
+            if (room.finaleGivenAnswers) {
+              if (!room.finaleGivenAnswers[activeName]) {
+                room.finaleGivenAnswers[activeName] = Array(20).fill('');
+              }
+              room.finaleGivenAnswers[activeName][room.finaleQuestionIndex] = givenAnswer || 'Zeit abgelaufen';
+            }
             
             // Mark next question as wrong too, if there is one
             if (room.finaleQuestionIndex + 1 < 20) {
               scores[room.finaleQuestionIndex + 1] = 0;
+              if (room.finaleGivenAnswers) {
+                if (!room.finaleGivenAnswers[activeName]) {
+                  room.finaleGivenAnswers[activeName] = Array(20).fill('');
+                }
+                room.finaleGivenAnswers[activeName][room.finaleQuestionIndex + 1] = 'Übersprungen wegen Zeitspiel';
+              }
               room.finaleQuestionIndex += 2;
             } else {
               room.finaleQuestionIndex += 1;
             }
           } else {
             scores[room.finaleQuestionIndex] = isCorrect ? 1 : 0;
+            if (!isCorrect && room.finaleGivenAnswers) {
+              if (!room.finaleGivenAnswers[activeName]) {
+                room.finaleGivenAnswers[activeName] = Array(20).fill('');
+              }
+              room.finaleGivenAnswers[activeName][room.finaleQuestionIndex] = givenAnswer || '';
+            }
             room.finaleQuestionIndex += 1;
           }
 
           // Move to next question or switch player
           if (room.finaleQuestionIndex < 20) {
             room.currentQuestion = room.finaleQuestions[room.finaleQuestionIndex] || null;
-            room.currentQuestionActiveAt = Date.now();
+            room.currentQuestionActiveAt = null;
           } else {
             // Check if there is a second player who hasn't played yet
             const activeFinalists = room.players.filter(p => !p.isEliminated);
@@ -1001,7 +1025,7 @@ app.post('/api/room/:roomCode/action', async (req, res) => {
               room.finaleActivePlayer = p2.name;
               room.finaleQuestionIndex = p2Adv;
               room.currentQuestion = room.finaleQuestions[room.finaleQuestionIndex] || null;
-              room.currentQuestionActiveAt = Date.now();
+              room.currentQuestionActiveAt = null;
             } else {
               // Both players finished their 20 questions! Determine the winner
               room.status = 'ended';
